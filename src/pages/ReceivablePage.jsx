@@ -1,45 +1,98 @@
 // src/pages/ReceivablePage.jsx
-import React, { useState } from 'react';
-import ReceivableForm from '../components/forms/ReceivableForm'; // Komponen form akan kita buat di bawah
-import { PlusIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/solid'; // Untuk ikon
+import React, { useState, useEffect, useCallback } from 'react';
+import ReceivableForm from '../components/forms/ReceivableForm';
+import { PlusIcon, ChevronLeftIcon, ChevronRightIcon, PencilIcon, TrashIcon, CheckCircleIcon } from '@heroicons/react/24/solid';
+import receivableService from '../services/receivableService'; // Import receivableService
 
 const ReceivablePage = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
-  // Data dummy untuk daftar piutang
-  const [receivables, setReceivables] = useState([
-    {
-      id: 'r1',
-      person: 'Dedi Kurniawan',
-      amount: 700000,
-      dueDate: '2025-09-01',
-      description: 'Piutang penjualan barang',
-      status: 'Belum Lunas'
-    },
-    {
-      id: 'r2',
-      person: 'Eka Putri',
-      amount: 300000,
-      dueDate: '2025-07-25',
-      description: 'Pembayaran jasa desain',
-      status: 'Belum Lunas'
-    },
-    {
-      id: 'r3',
-      person: 'Faisal Akbar',
-      amount: 1200000,
-      dueDate: '2025-06-10',
-      description: 'Piutang proyek X',
-      status: 'Lunas'
-    },
-  ]);
+  const [receivables, setReceivables] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [editingReceivable, setEditingReceivable] = useState(null);
 
-  const handleAddReceivable = (newReceivable) => {
-    setReceivables((prevReceivables) => [
-      { id: Date.now().toString(), status: 'Belum Lunas', ...newReceivable },
-      ...prevReceivables,
-    ]);
-    setIsFormOpen(false);
-    console.log('Piutang baru ditambahkan:', newReceivable);
+  // Fungsi untuk mengambil data piutang dari backend
+  const fetchReceivables = useCallback(async () => {
+    setIsLoading(true);
+    setError('');
+    try {
+      const data = await receivableService.getAllReceivables();
+      setReceivables(data);
+    } catch (err) {
+      setError(err.message || 'Gagal memuat daftar piutang.');
+      console.error('Error fetching receivables:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchReceivables();
+  }, [fetchReceivables]);
+
+  // Fungsi untuk menambahkan piutang baru
+  const handleAddReceivable = async (newReceivableData) => {
+    setError('');
+    try {
+      const addedReceivable = await receivableService.addReceivable(newReceivableData);
+      setReceivables((prevReceivables) => [addedReceivable, ...prevReceivables]);
+      setIsFormOpen(false);
+    } catch (err) {
+      setError(err.message || 'Gagal menambahkan piutang.');
+      console.error('Error adding receivable:', err);
+    }
+  };
+
+  // Fungsi untuk memulai mode edit
+  const handleEditClick = (receivable) => {
+    setEditingReceivable(receivable);
+    setIsFormOpen(true);
+  };
+
+  // Fungsi untuk mengupdate piutang
+  const handleUpdateReceivable = async (updatedReceivableData) => {
+    setError('');
+    try {
+      const updatedReceivable = await receivableService.updateReceivable(editingReceivable.id, updatedReceivableData);
+      setReceivables((prevReceivables) =>
+        prevReceivables.map((rec) => (rec.id === updatedReceivable.id ? updatedReceivable : rec))
+      );
+      setEditingReceivable(null);
+      setIsFormOpen(false);
+    } catch (err) {
+      setError(err.message || 'Gagal memperbarui piutang.');
+      console.error('Error updating receivable:', err);
+    }
+  };
+
+  // Fungsi untuk menghapus piutang
+  const handleDeleteReceivable = async (id) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus piutang ini?')) {
+      setError('');
+      try {
+        await receivableService.deleteReceivable(id);
+        setReceivables((prevReceivables) => prevReceivables.filter((rec) => rec.id !== id));
+      } catch (err) {
+        setError(err.message || 'Gagal menghapus piutang.');
+        console.error('Error deleting receivable:', err);
+      }
+    }
+  };
+
+  // Fungsi untuk menandai piutang lunas
+  const handleMarkAsPaid = async (id) => {
+    if (window.confirm('Apakah Anda yakin ingin menandai piutang ini sebagai Lunas?')) {
+      setError('');
+      try {
+        const updatedReceivable = await receivableService.markReceivableAsPaid(id);
+        setReceivables((prevReceivables) =>
+          prevReceivables.map((rec) => (rec.id === updatedReceivable.id ? updatedReceivable : rec))
+        );
+      } catch (err) {
+        setError(err.message || 'Gagal menandai piutang sebagai lunas.');
+        console.error('Error marking receivable as paid:', err);
+      }
+    }
   };
 
   const formatCurrency = (value) => {
@@ -56,12 +109,17 @@ const ReceivablePage = () => {
     return new Date(dateString).toLocaleDateString('id-ID', options);
   };
 
+  const handleFormClose = () => {
+    setIsFormOpen(false);
+    setEditingReceivable(null);
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100">Daftar Piutang</h1>
         <button
-          onClick={() => setIsFormOpen(true)}
+          onClick={() => { setIsFormOpen(true); setEditingReceivable(null); }}
           className="px-6 py-3 rounded-full text-white font-semibold
                      bg-primary-light dark:bg-primary-dark
                      hover:bg-primary-dark dark:hover:bg-secondary-dark
@@ -73,15 +131,30 @@ const ReceivablePage = () => {
         </button>
       </div>
 
+      {error && (
+        <p className="text-red-500 text-sm text-center">{error}</p>
+      )}
+
+      {/* Form Tambah/Edit Piutang */}
       {isFormOpen && (
         <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">Tambah Piutang Baru</h2>
-          <ReceivableForm onAddReceivable={handleAddReceivable} onCancel={() => setIsFormOpen(false)} />
+          <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-gray-200">
+            {editingReceivable ? 'Edit Piutang' : 'Tambah Piutang Baru'}
+          </h2>
+          <ReceivableForm
+            onAddReceivable={handleAddReceivable}
+            onUpdateReceivable={handleUpdateReceivable}
+            onCancel={handleFormClose}
+            initialData={editingReceivable}
+          />
         </div>
       )}
 
+      {/* Daftar Piutang */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
-        {receivables.length === 0 ? (
+        {isLoading ? (
+          <p className="text-center text-gray-600 dark:text-gray-400">Memuat data piutang...</p>
+        ) : receivables.length === 0 ? (
           <p className="text-center text-gray-600 dark:text-gray-400">Belum ada data piutang.</p>
         ) : (
           <div className="overflow-x-auto">
@@ -130,8 +203,29 @@ const ReceivablePage = () => {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button className="text-primary-light dark:text-primary-dark hover:text-primary-dark dark:hover:text-secondary-dark mr-4">Edit</button>
-                      <button className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300">Hapus</button>
+                      {receivable.status !== 'Lunas' && (
+                        <button
+                          onClick={() => handleMarkAsPaid(receivable.id)}
+                          className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-300 mr-4"
+                          title="Tandai Lunas"
+                        >
+                          <CheckCircleIcon className="h-5 w-5 inline-block" />
+                        </button>
+                      )}
+                      <button
+                        onClick={() => handleEditClick(receivable)}
+                        className="text-primary-light dark:text-primary-dark hover:text-primary-dark dark:hover:text-secondary-dark mr-4"
+                        title="Edit Piutang"
+                      >
+                        <PencilIcon className="h-5 w-5 inline-block" />
+                      </button>
+                      <button
+                        onClick={() => handleDeleteReceivable(receivable.id)}
+                        className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300"
+                        title="Hapus Piutang"
+                      >
+                        <TrashIcon className="h-5 w-5 inline-block" />
+                      </button>
                     </td>
                   </tr>
                 ))}

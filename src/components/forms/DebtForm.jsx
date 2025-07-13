@@ -1,8 +1,9 @@
 // src/components/forms/DebtForm.jsx
-import React, { useState } from 'react';
-import { CurrencyDollarIcon, UserIcon, CalendarDaysIcon, DocumentTextIcon } from '@heroicons/react/24/outline'; // Outline icon untuk form
+import React, { useState, useEffect } from 'react';
+import { CurrencyDollarIcon, UserIcon, CalendarDaysIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 
-const DebtForm = ({ onAddDebt, onCancel }) => {
+// Menerima onUpdateDebt dan initialData sebagai props baru
+const DebtForm = ({ onAddDebt, onUpdateDebt, onCancel, initialData }) => {
   const [person, setPerson] = useState('');
   const [amount, setAmount] = useState('');
   const [dueDate, setDueDate] = useState('');
@@ -10,11 +11,27 @@ const DebtForm = ({ onAddDebt, onCancel }) => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Gunakan useEffect untuk mengisi form jika ada initialData (mode edit)
+  useEffect(() => {
+    if (initialData) {
+      setPerson(initialData.person || '');
+      setAmount(initialData.amount || '');
+      setDueDate(initialData.dueDate ? initialData.dueDate.split('T')[0] : ''); // Format tanggal untuk input type="date"
+      setDescription(initialData.description || '');
+    } else {
+      // Reset form jika tidak ada initialData (mode tambah baru)
+      setPerson('');
+      setAmount('');
+      setDueDate('');
+      setDescription('');
+    }
+    setError(''); // Bersihkan error saat initialData berubah
+  }, [initialData]);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
 
-    // Validasi sederhana
     if (!person || !amount || !dueDate) {
       setError('Nama, Jumlah, dan Tanggal Jatuh Tempo wajib diisi.');
       return;
@@ -26,26 +43,31 @@ const DebtForm = ({ onAddDebt, onCancel }) => {
 
     setLoading(true);
 
+    const dataToSubmit = {
+      person,
+      amount: parseFloat(amount),
+      dueDate,
+      description,
+    };
+
     try {
-      const newDebt = {
-        person,
-        amount: parseFloat(amount), // Pastikan amount adalah number
-        dueDate,
-        description,
-      };
-
-      // Simulasi pemanggilan API
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      onAddDebt(newDebt); // Panggil fungsi dari parent (DebtPage)
-      // Reset form
-      setPerson('');
-      setAmount('');
-      setDueDate('');
-      setDescription('');
+      if (initialData) {
+        // Jika ada initialData, panggil onUpdateDebt
+        await onUpdateDebt(dataToSubmit);
+      } else {
+        // Jika tidak ada initialData, panggil onAddDebt
+        await onAddDebt(dataToSubmit);
+      }
+      // Reset form hanya jika mode tambah baru
+      if (!initialData) {
+          setPerson('');
+          setAmount('');
+          setDueDate('');
+          setDescription('');
+      }
     } catch (err) {
-      setError('Gagal menambahkan utang. Silakan coba lagi.');
-      console.error('Add debt error:', err);
+      setError(err.message || 'Terjadi kesalahan saat menyimpan data.');
+      console.error('Form submission error:', err);
     } finally {
       setLoading(false);
     }
@@ -153,7 +175,7 @@ const DebtForm = ({ onAddDebt, onCancel }) => {
                      shadow-md hover:shadow-lg
                      transition-all duration-200`}
         >
-          {loading ? 'Menyimpan...' : 'Simpan Utang'}
+          {loading ? 'Menyimpan...' : (initialData ? 'Simpan Perubahan' : 'Simpan Utang')}
         </button>
       </div>
     </form>

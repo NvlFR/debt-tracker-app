@@ -1,14 +1,29 @@
 // src/components/forms/ReceivableForm.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { CurrencyDollarIcon, UserIcon, CalendarDaysIcon, DocumentTextIcon } from '@heroicons/react/24/outline';
 
-const ReceivableForm = ({ onAddReceivable, onCancel }) => {
+const ReceivableForm = ({ onAddReceivable, onUpdateReceivable, onCancel, initialData }) => {
   const [person, setPerson] = useState('');
   const [amount, setAmount] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [description, setDescription] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (initialData) {
+      setPerson(initialData.person || '');
+      setAmount(initialData.amount || '');
+      setDueDate(initialData.dueDate ? initialData.dueDate.split('T')[0] : '');
+      setDescription(initialData.description || '');
+    } else {
+      setPerson('');
+      setAmount('');
+      setDueDate('');
+      setDescription('');
+    }
+    setError('');
+  }, [initialData]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -25,24 +40,28 @@ const ReceivableForm = ({ onAddReceivable, onCancel }) => {
 
     setLoading(true);
 
+    const dataToSubmit = {
+      person,
+      amount: parseFloat(amount),
+      dueDate,
+      description,
+    };
+
     try {
-      const newReceivable = {
-        person,
-        amount: parseFloat(amount),
-        dueDate,
-        description,
-      };
-
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      onAddReceivable(newReceivable);
-      setPerson('');
-      setAmount('');
-      setDueDate('');
-      setDescription('');
+      if (initialData) {
+        await onUpdateReceivable(dataToSubmit);
+      } else {
+        await onAddReceivable(dataToSubmit);
+      }
+      if (!initialData) {
+          setPerson('');
+          setAmount('');
+          setDueDate('');
+          setDescription('');
+      }
     } catch (err) {
-      setError('Gagal menambahkan piutang. Silakan coba lagi.');
-      console.error('Add receivable error:', err);
+      setError(err.message || 'Terjadi kesalahan saat menyimpan data.');
+      console.error('Form submission error:', err);
     } finally {
       setLoading(false);
     }
@@ -150,7 +169,7 @@ const ReceivableForm = ({ onAddReceivable, onCancel }) => {
                      shadow-md hover:shadow-lg
                      transition-all duration-200`}
         >
-          {loading ? 'Menyimpan...' : 'Simpan Piutang'}
+          {loading ? 'Menyimpan...' : (initialData ? 'Simpan Perubahan' : 'Simpan Piutang')}
         </button>
       </div>
     </form>

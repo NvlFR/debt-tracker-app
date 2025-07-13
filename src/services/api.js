@@ -1,10 +1,8 @@
 // src/services/api.js
 import axios from 'axios';
+import { toast } from 'react-toastify'; // Import toast
 
-// Base URL untuk API backend kamu.
-// Gunakan variabel lingkungan (environment variable) untuk kemudahan konfigurasi.
-// Contoh: REACT_APP_API_BASE_URL (untuk Create React App) atau VITE_API_BASE_URL (untuk Vite)
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'; // Ganti dengan URL backend-mu
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -13,12 +11,11 @@ const api = axios.create({
   },
 });
 
-// Interceptor untuk menambahkan token JWT ke setiap request yang terotentikasi
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('userToken'); // Ambil token dari localStorage
+    const token = localStorage.getItem('userToken');
     if (token) {
-      config.headers.Authorization = `Bearer ${token}`; // Tambahkan header Authorization
+      config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
@@ -27,20 +24,31 @@ api.interceptors.request.use(
   }
 );
 
-// Interceptor untuk menangani error response, terutama 401 Unauthorized
 api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
-    // Jika respons 401 dan bukan request ke endpoint login/refresh token
-    if (error.response.status === 401 && !originalRequest._retry) {
-      originalRequest._retry = true; // Tandai request ini sebagai sudah dicoba lagi
-      // Di sini bisa ditambahkan logika untuk refresh token jika ada
-      // Untuk sementara, jika 401, kita akan paksa logout
+    const errorMessage = error.response?.data?.message || 'Terjadi kesalahan tidak dikenal.';
+
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
       localStorage.removeItem('userToken');
-      // Redirect ke halaman login
-      window.location.href = '/auth'; // Menggunakan window.location.href untuk hard redirect
+      // Tampilkan toast sebelum redirect
+      toast.error('Sesi Anda telah berakhir. Silakan login kembali.', {
+        position: "top-right",
+        autoClose: 3000,
+        onClose: () => {
+          window.location.href = '/auth'; // Redirect setelah toast muncul
+        }
+      });
       return Promise.reject(error);
+    }
+
+    // Untuk error lain, tampilkan toast generic
+    if (error.response?.status >= 400 && error.response?.status < 500 && error.response?.status !== 401) {
+      toast.error(errorMessage, { position: "top-right", autoClose: 5000 });
+    } else if (error.response?.status >= 500) {
+      toast.error('Server error: ' + errorMessage, { position: "top-right", autoClose: 5000 });
     }
     return Promise.reject(error);
   }
