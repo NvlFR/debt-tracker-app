@@ -1,87 +1,61 @@
 // src/pages/VerifyEmail.jsx
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import axios from 'axios';
-import { Container, Typography, Box, CircularProgress, Alert, Button } from '@mui/material';
+import axios from 'axios'; // Pastikan axios terinstal: npm install axios
 
 const VerifyEmail = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [verificationStatus, setVerificationStatus] = useState('verifying'); // verifying, success, error
-  const [message, setMessage] = useState('');
+  const [message, setMessage] = useState('Memverifikasi email Anda...');
+  const [isSuccess, setIsSuccess] = useState(false);
 
   useEffect(() => {
-    const verifyUserEmail = async () => {
-      const params = new URLSearchParams(location.search);
-      const token = params.get('token');
+    const verifyToken = async () => {
+      const queryParams = new URLSearchParams(location.search);
+      const token = queryParams.get('token');
 
       if (!token) {
-        setVerificationStatus('error');
-        setMessage('Verification token not found in URL.');
+        setMessage('Token verifikasi tidak ditemukan.');
         return;
       }
 
       try {
-        // Mengirim token ke backend untuk verifikasi
-        const response = await axios.get(`${import.meta.env.VITE_BACKEND_URL}/api/auth/verify-email?token=${token}`);
-        setVerificationStatus('success');
-        setMessage(response.data.message || 'Your email has been successfully verified!');
+        // Ini adalah MOCK untuk verifikasi email. JSON Server tidak memverifikasi token sungguhan.
+        // Di backend nyata, ini akan menjadi POST ke endpoint verifikasi Anda (misal: /api/auth/verify-email)
+        // Kita akan simulasikan sukses jika token ada.
+        // const response = await axios.post('http://localhost:5000/api/auth/verify-email', { token }); // Jika ada endpoint sungguhan
+        await new Promise(resolve => setTimeout(resolve, 1500)); // Simulasikan penundaan jaringan
+        setMessage('Verifikasi email berhasil! Anda sekarang dapat login.');
+        setIsSuccess(true);
       } catch (error) {
-        setVerificationStatus('error');
-        setMessage(error.response?.data?.message || 'Email verification failed. Please try again or register again.');
+        console.error('Email verification error:', error);
+        setMessage('Verifikasi email gagal atau token tidak valid/kadaluarsa.');
+        setIsSuccess(false);
       }
     };
 
-    verifyUserEmail();
-  }, [location.search]);
+    verifyToken();
+  }, [location.search]); // Dependensi
 
-  const handleLoginRedirect = () => {
-    navigate('/auth'); // Redirect to login page
+  const handleGoToLogin = () => {
+    navigate('/auth'); // Arahkan ke halaman login/auth
   };
 
   return (
-    <Container component="main" maxWidth="sm" sx={{ mt: 8 }}>
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          p: 4,
-          borderRadius: 2,
-          boxShadow: 3,
-          backgroundColor: 'background.paper',
-        }}
-      >
-        {verificationStatus === 'verifying' && (
-          <>
-            <CircularProgress sx={{ mb: 2 }} />
-            <Typography component="h1" variant="h5">
-              Verifying your email...
-            </Typography>
-          </>
-        )}
-        {verificationStatus === 'success' && (
-          <>
-            <Alert severity="success" sx={{ mb: 2, width: '100%' }}>
-              {message}
-            </Alert>
-            <Button variant="contained" onClick={handleLoginRedirect}>
-              Go to Login
-            </Button>
-          </>
-        )}
-        {verificationStatus === 'error' && (
-          <>
-            <Alert severity="error" sx={{ mb: 2, width: '100%' }}>
-              {message}
-            </Alert>
-            <Button variant="outlined" onClick={handleLoginRedirect}>
-              Go to Login
-            </Button>
-          </>
-        )}
-      </Box>
-    </Container>
+    <div className="flex justify-center items-center h-screen bg-gray-100 dark:bg-gray-900">
+      <div className="bg-white dark:bg-gray-800 p-8 rounded-lg shadow-xl text-center max-w-sm w-full">
+        <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">Verifikasi Email</h2>
+        <p className={`mb-6 ${isSuccess ? 'text-green-600' : 'text-red-600'} dark:${isSuccess ? 'text-green-400' : 'text-red-400'}`}>
+          {message}
+        </p>
+        <button
+          onClick={handleGoToLogin}
+          className="w-full px-4 py-2 bg-primary-light text-white rounded-md hover:bg-primary-dark transition duration-200"
+        >
+          KEMBALI KE LOGIN
+        </button>
+      </div>
+    </div>
   );
 };
 

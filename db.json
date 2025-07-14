@@ -4,7 +4,7 @@
       "id": "1",
       "name": "John Doe",
       "email": "john@example.com",
-      "password": "password123",
+      "password": "12345678",
       "isVerified": true
     },
     {
@@ -42,37 +42,35 @@
       "paymentDate": "2025-07-14",
       "reminderDate": "2025-07-14",
       "id": "fe56"
+    },
+    {
+      "id": "1e28",
+      "personName": "sayang",
+      "amount": 12000000,
+      "transactionDate": "2025-07-14",
+      "dueDate": "2025-07-19",
+      "description": "sayang",
+      "status": "pending",
+      "category": "pribadi",
+      "paymentDate": "2025-07-18",
+      "reminderDate": "2025-07-16",
+      "userId": "1"
+    },
+    {
+      "id": "d1db",
+      "personName": "s",
+      "amount": 10000000,
+      "transactionDate": "2025-07-14",
+      "dueDate": "",
+      "description": "",
+      "status": "pending",
+      "category": "Pribadi",
+      "paymentDate": "",
+      "proofUrl": "",
+      "userId": "1"
     }
   ],
   "receivables": [
-    {
-      "id": "1",
-      "userId": 1,
-      "personName": "David",
-      "amount": 300000,
-      "transactionDate": "2025-07-10",
-      "dueDate": "2025-07-20",
-      "description": "Pembelian barang",
-      "status": "paid",
-      "category": "bisnis",
-      "proofUrl": null,
-      "paymentDate": "2025-07-14",
-      "reminderDate": "2025-07-18",
-      "receivedBy": null
-    },
-    {
-      "id": "2",
-      "userId": 1,
-      "personName": "Eve",
-      "amount": 100000,
-      "transactionDate": "2025-06-01",
-      "dueDate": "2025-08-01",
-      "description": "Kembalian kasbon",
-      "status": "paid",
-      "category": "pribadi",
-      "paymentDate": "2025-08-01",
-      "receivedBy": null
-    },
     {
       "id": "3",
       "userId": 2,
@@ -89,16 +87,54 @@
       "receivedBy": null
     },
     {
-      "id": "1cfc",
-      "personName": "ssss",
-      "amount": 1222222222,
+      "personName": "kamu",
+      "amount": 10000000,
       "transactionDate": "2025-07-14",
-      "dueDate": "2025-07-14",
-      "description": "11111",
-      "status": "paid",
-      "category": "pribadi",
-      "paymentDate": "2025-07-14",
-      "reminderDate": "2025-07-23",
+      "dueDate": "2025-07-19",
+      "description": "sayang",
+      "status": "pending",
+      "category": "Pribadi",
+      "paymentDate": "",
+      "proofUrl": "",
+      "id": "1c64"
+    },
+    {
+      "id": "6ba2",
+      "personName": "ai",
+      "amount": 10000000,
+      "transactionDate": "2025-07-14",
+      "dueDate": "",
+      "description": "no",
+      "status": "pending",
+      "category": "Pribadi",
+      "paymentDate": "",
+      "proofUrl": "",
+      "userId": "1"
+    },
+    {
+      "id": "9727",
+      "personName": "a",
+      "amount": 10000000,
+      "transactionDate": "2025-07-14",
+      "dueDate": "",
+      "description": "",
+      "status": "pending",
+      "category": "Pribadi",
+      "paymentDate": "",
+      "proofUrl": "",
+      "userId": "1"
+    },
+    {
+      "id": "decd",
+      "personName": "a",
+      "amount": 10000000,
+      "transactionDate": "2025-07-14",
+      "dueDate": "",
+      "description": "",
+      "status": "pending",
+      "category": "Pribadi",
+      "paymentDate": "",
+      "proofUrl": "",
       "userId": "1"
     }
   ]

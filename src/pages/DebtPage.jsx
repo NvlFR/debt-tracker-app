@@ -1,123 +1,166 @@
 // src/pages/DebtPage.jsx
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../contexts/AuthContext';
-import TransactionForm from '../components/common/TransactionForm'; // Import form
-import { PlusCircleIcon, PencilSquareIcon, TrashIcon } from '@heroicons/react/24/outline'; // Ikon untuk tombol
 import { toast } from 'react-toastify';
-
-
-
+import TransactionForm from '../components/common/TransactionForm'; // Pastikan path ini benar
+import Modal from '../components/common/Modal'; 
+import LoadingSpinner from '../components/common/LoadingSpinner'; // Import LoadingSpinner
 
 const DebtPage = () => {
-  const { user, authService } = useAuth(); // Ambil user dan authService dari AuthContext
+  const { currentUser, authService } = useAuth(); // <--- PENTING: Pastikan authService tersedia dari context
   const [debts, setDebts] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [showAddForm, setShowAddForm] = useState(false); // State untuk menampilkan/menyembunyikan form
-  const [editingDebt, setEditingDebt] = useState(null); // State untuk data utang yang sedang diedit
+  const [error, setError] = useState(null);
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [editingDebt, setEditingDebt] = useState(null);
+
+  const formatRupiah = (amount) => {
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+    }).format(amount);
+  };
 
   const fetchDebts = useCallback(async () => {
+    // <--- PENTING: Tambahkan pengecekan ini
+    if (!currentUser || !currentUser.id || !authService || !authService.getDebts) {
+      setError("User ID tidak ditemukan atau layanan autentikasi tidak siap.");
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
+    setError(null);
     try {
-      if (user && user.id) {
-        const data = await authService.getDebts(user.id);
-        setDebts(data);
-      }
-    } catch (error) {
-      console.error('Error fetching debts:', error);
-      toast.error('Gagal mengambil data utang.');
+      const data = await authService.getDebts(currentUser.id); // Panggil getDebts dari authService
+      setDebts(data);
+    } catch (err) {
+      console.error("Failed to fetch debts:", err);
+      setError("Gagal memuat daftar utang.");
+      toast.error("Gagal memuat daftar utang.");
     } finally {
       setIsLoading(false);
     }
-  }, [user, authService]);
+  }, [currentUser, authService]); // <--- PENTING: currentUser dan authService adalah dependencies
 
   useEffect(() => {
     fetchDebts();
-  }, [fetchDebts]);
+  }, [fetchDebts]); // <--- PENTING: Tambahkan fetchDebts sebagai dependency (mengatasi peringatan linter)
 
-const handleAddDebt = async (debtData) => {
-  try {
-    await authService.addDebt({ ...debtData, userId: user.id });
-    // BARIS PENTING INI:
-    fetchDebts(); // <--- PASTIKAN INI ADA SETELAH BERHASIL MENAMBAHKAN
-  } catch (error) {
-    throw error;
-  }
-};
-
-const handleUpdateDebt = async (debtData) => {
-  try {
-    await authService.updateDebt(editingDebt.id, debtData);
-    // BARIS PENTING INI:
-    fetchDebts(); // <--- PASTIKAN INI ADA SETELAH BERHASIL MEMPERBARUI
-    setEditingDebt(null);
-  } catch (error) {
-    throw error;
-  }
-};
-
-const handleDeleteDebt = async (id) => {
-  if (window.confirm('Apakah Anda yakin ingin menghapus utang ini?')) {
+  const handleAddDebt = async (debtData) => {
+    // <--- PENTING: Tambahkan pengecekan ini
+    if (!authService || !authService.addDebt) {
+        toast.error("Layanan untuk menambahkan utang tidak tersedia.");
+        throw new Error("AuthService not ready for addDebt.");
+    }
     try {
-      await authService.deleteDebt(id);
+      await authService.addDebt({ ...debtData, userId: currentUser.id }); // Panggil addDebt dari authService
+      toast.success('Utang berhasil ditambahkan!');
+      fetchDebts(); // Muat ulang daftar utang
+    } catch (error) {
+      console.error('Error adding debt:', error);
+      toast.error(`Gagal menambahkan utang: ${error.message || ''}`);
+      throw error;
+    }
+  };
+
+  const handleUpdateDebt = async (debtData) => {
+    // <--- PENTING: Tambahkan pengecekan ini
+    if (!authService || !authService.updateDebt) {
+        toast.error("Layanan untuk memperbarui utang tidak tersedia.");
+        throw new Error("AuthService not ready for updateDebt.");
+    }
+    try {
+      await authService.updateDebt(editingDebt.id, debtData); // Panggil updateDebt dari authService
+      toast.success('Utang berhasil diperbarui!');
+      fetchDebts();
+      setEditingDebt(null);
+    } catch (error) {
+      console.error('Error updating debt:', error);
+      toast.error(`Gagal memperbarui utang: ${error.message || ''}`);
+      throw error;
+    }
+  };
+
+  const handleDeleteDebt = async (id) => {
+    // <--- PENTING: Tambahkan pengecekan ini
+    if (!authService || !authService.deleteDebt) {
+        toast.error("Layanan untuk menghapus utang tidak tersedia.");
+        return;
+    }
+    if (!window.confirm('Apakah Anda yakin ingin menghapus utang ini?')) return;
+    try {
+      await authService.deleteDebt(id); // Panggil deleteDebt dari authService
       toast.success('Utang berhasil dihapus!');
-      // BARIS PENTING INI:
-      fetchDebts(); // <--- PASTIKAN INI ADA SETELAH BERHASIL MENGHAPUS
+      fetchDebts();
     } catch (error) {
       console.error('Error deleting debt:', error);
-      toast.error('Gagal menghapus utang.');
+      toast.error(`Gagal menghapus utang: ${error.message || ''}`);
     }
-  }
-};
+  };
 
   const handleMarkAsPaid = async (debt) => {
+    // <--- PENTING: Tambahkan pengecekan ini
+    if (!authService || !authService.updateDebt) {
+        toast.error("Layanan untuk menandai lunas tidak tersedia.");
+        return;
+    }
+    const updatedDebt = {
+      ...debt,
+      status: 'paid',
+      paymentDate: new Date().toISOString().split('T')[0],
+    };
     try {
-      const updatedDebt = { ...debt, status: 'paid', paymentDate: new Date().toISOString().split('T')[0] };
       await authService.updateDebt(debt.id, updatedDebt);
       toast.success('Utang berhasil ditandai lunas!');
       fetchDebts();
     } catch (error) {
       console.error('Error marking debt as paid:', error);
-      toast.error('Gagal menandai utang lunas.');
+      toast.error(`Gagal menandai lunas: ${error.message || ''}`);
     }
   };
 
-  return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">Daftar Utang</h1>
-        <button
-          onClick={() => {
-            setShowAddForm(true);
-            setEditingDebt(null); // Pastikan tidak dalam mode edit saat tambah
-          }}
-          className="px-4 py-2 bg-primary-light text-white rounded-md flex items-center hover:bg-primary-dark transition-colors"
-        >
-          <PlusCircleIcon className="h-5 w-5 mr-2" />
-          Tambah Utang Baru
-        </button>
+  const openAddForm = () => {
+    setEditingDebt(null);
+    setIsFormOpen(true);
+  };
+
+  const openEditForm = (debt) => {
+    setEditingDebt(debt);
+    setIsFormOpen(true);
+  };
+
+  const closeForm = () => {
+    setIsFormOpen(false);
+    setEditingDebt(null);
+  };
+
+  if (isLoading) {
+    return <LoadingSpinner />;
+  }
+
+  if (error) {
+    return (
+      <div className="flex justify-center items-center h-full text-red-600 dark:text-red-400">
+        <p>{error}</p>
       </div>
+    );
+  }
 
-      {/* Modal / Form Tambah/Edit Utang */}
-      {(showAddForm || editingDebt) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <TransactionForm
-            type="debt"
-            initialData={editingDebt || {}}
-            onSubmit={editingDebt ? handleUpdateDebt : handleAddDebt}
-            onClose={() => {
-              setShowAddForm(false);
-              setEditingDebt(null);
-            }}
-          />
-        </div>
-      )}
+  return (
+    <div className="container mx-auto p-4">
+      <h1 className="text-2xl font-bold mb-4 text-gray-900 dark:text-gray-100">Daftar Utang</h1>
+      <button
+        onClick={openAddForm}
+        className="mb-4 px-4 py-2 bg-primary-light text-white rounded-md hover:bg-primary-dark transition duration-200"
+      >
+        Tambah Utang Baru
+      </button>
 
-      {isLoading ? (
-        <p className="text-gray-600 dark:text-gray-400">Memuat data utang...</p>
-      ) : debts.length === 0 ? (
-        <p className="text-gray-600 dark:text-gray-400">Belum ada utang. Tambahkan yang pertama!</p>
+      {debts.length === 0 ? (
+        <p className="text-gray-600 dark:text-gray-300">Belum ada utang tercatat.</p>
       ) : (
-        <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow-lg p-4">
+        <div className="overflow-x-auto bg-white dark:bg-gray-800 rounded-lg shadow">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
               <tr>
@@ -128,66 +171,55 @@ const handleDeleteDebt = async (id) => {
                   Jumlah
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                  Tanggal Transaksi
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Jatuh Tempo
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
-                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Kategori
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Aksi
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200 dark:bg-gray-800 dark:divide-gray-700">
+            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               {debts.map((debt) => (
-                <tr key={debt.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-gray-100">
-                    {debt.personName}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    Rp {debt.amount.toLocaleString('id-ID')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {debt.dueDate ? new Date(debt.dueDate).toLocaleDateString('id-ID') : '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full
-                      ${debt.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-800 dark:text-yellow-100' : ''}
-                      ${debt.status === 'paid' ? 'bg-green-100 text-green-800 dark:bg-green-800 dark:text-green-100' : ''}
-                      ${debt.status === 'overdue' ? 'bg-red-100 text-red-800 dark:bg-red-800 dark:text-red-100' : ''}
-                    `}>
+                <tr key={debt.id}>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{debt.personName}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{formatRupiah(debt.amount)}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{debt.transactionDate}</td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{debt.dueDate || '-'}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                      debt.status === 'paid' ? 'bg-green-100 text-green-800 dark:bg-green-700 dark:text-green-100' :
+                      debt.status === 'pending' ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-700 dark:text-yellow-100' :
+                      'bg-red-100 text-red-800 dark:bg-red-700 dark:text-red-100' // Untuk overdue, jika ada
+                    }`}>
                       {debt.status === 'pending' ? 'Belum Lunas' : debt.status === 'paid' ? 'Lunas' : 'Jatuh Tempo'}
                     </span>
                   </td>
-                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-300">
-                    {debt.category || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    {debt.status !== 'paid' && (
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                    {debt.status === 'pending' && (
                       <button
                         onClick={() => handleMarkAsPaid(debt)}
-                        className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200 mr-3"
+                        className="text-green-600 hover:text-green-900 dark:text-green-400 dark:hover:text-green-200 mr-2"
                       >
                         Lunas
                       </button>
                     )}
                     <button
-                      onClick={() => {
-                        setEditingDebt(debt); // Set data utang untuk diedit
-                        setShowAddForm(false); // Pastikan form tambah tidak aktif
-                      }}
-                      className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 mr-3"
+                      onClick={() => openEditForm(debt)}
+                      className="text-indigo-600 hover:text-indigo-900 dark:text-indigo-400 dark:hover:text-indigo-200 mr-2"
                     >
-                      <PencilSquareIcon className="h-5 w-5 inline-block" />
+                      Edit
                     </button>
                     <button
                       onClick={() => handleDeleteDebt(debt.id)}
                       className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-200"
                     >
-                      <TrashIcon className="h-5 w-5 inline-block" />
+                      Hapus
                     </button>
                   </td>
                 </tr>
@@ -195,6 +227,17 @@ const handleDeleteDebt = async (id) => {
             </tbody>
           </table>
         </div>
+      )}
+
+      {isFormOpen && (
+        <Modal onClose={closeForm}>
+          <TransactionForm
+            type="debt"
+            initialData={editingDebt || {}}
+            onSubmit={editingDebt ? handleUpdateDebt : handleAddDebt}
+            onClose={closeForm}
+          />
+        </Modal>
       )}
     </div>
   );

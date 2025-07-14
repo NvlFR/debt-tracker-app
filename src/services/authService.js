@@ -1,10 +1,10 @@
 // src/services/authService.js
 import api from './api'; // Import instance Axios yang sudah kita buat
 
+// AuthService Object
 const authService = {
   /**
    * Mendaftarkan pengguna baru.
-   * Untuk JSON Server, kita akan mempost ke /users
    * @param {string} name - Nama pengguna.
    * @param {string} email - Email pengguna.
    * @param {string} password - Password pengguna.
@@ -12,96 +12,73 @@ const authService = {
    */
   register: async (name, email, password) => {
     try {
-      // JSON Server secara otomatis akan menambahkan ID baru
-      // Tambahkan isVerified secara default untuk JSON Server (sesuaikan jika ada verifikasi email sungguhan)
       const response = await api.post('/users', { name, email, password, isVerified: true });
       return response.data;
     } catch (error) {
-      console.error('Register failed:', error.response?.data || error.message, error); // Tambahkan 'error' objek lengkap
+      console.error('Register failed:', error.response?.data || error.message, error);
       const message = error.response?.data?.message || 'Terjadi kesalahan saat pendaftaran.';
-      throw new Error(message); // Lempar Error object
+      throw new Error(message);
     }
   },
 
   /**
    * Melakukan login pengguna.
-   * Untuk JSON Server, kita akan mencari user di /users dan mem-mock token.
    * @param {string} email - Email pengguna.
    * @param {string} password - Password pengguna.
-   * @returns {Promise<Object>} Data respons dummy (misal: user data, token dummy).
+   * @returns {Promise<Object>} Data user.
    */
   login: async (email, password) => {
     try {
-      // Di dunia nyata, ini akan menjadi POST ke /auth/login di backend.
-      // Dengan JSON Server, kita akan simulasi mencari user.
       const response = await api.get(`/users?email=${email}&password=${password}`);
       const user = response.data[0]; // Ambil user pertama yang cocok
 
       if (user) {
-        // Jika user ditemukan, simulasikan login berhasil
-        // Gunakan user.id di token agar getCurrentUser bisa mengambilnya kembali
-        const dummyToken = `dummy_jwt_token_for_user_id_${user.id}_${Date.now()}`;
-        localStorage.setItem('userToken', dummyToken);
-        // Kembalikan data user dan token dummy
-        return { token: dummyToken, user: { ...user, id: user.id } };
+        const token = `dummy_jwt_token_for_user_id_${user.id}_${Date.now()}`;
+        localStorage.setItem('token', token);   // <--- PENTING: Gunakan 'token'
+        localStorage.setItem('userId', user.id); // <--- PENTING: Simpan userId
+        return { ...user, id: user.id }; // Mengembalikan objek user lengkap
       } else {
-        // Jika user tidak ditemukan
-        throw new Error('Email atau password salah.'); // Lempar Error object
+        throw new Error('Email atau password salah.');
       }
     } catch (error) {
       console.error('Login failed:', error.response?.data || error.message, error);
       const message = error.response?.data?.message || 'Email atau password salah.';
-      throw new Error(message); // Lempar Error object
+      throw new Error(message);
     }
   },
 
   /**
    * Melakukan logout pengguna.
-   * Menghapus token dari localStorage.
+   * Menghapus token dan userId dari localStorage.
    */
   logout: () => {
-    localStorage.removeItem('userToken');
-    // Tidak ada panggilan API ke JSON Server untuk logout karena tidak relevan di sini
+    localStorage.removeItem('token');   // <--- PENTING: Gunakan 'token'
+    localStorage.removeItem('userId');  // <--- PENTING: Hapus juga userId
   },
 
   /**
-   * Mendapatkan data user saat ini berdasarkan token dummy dari localStorage.
-   * Untuk JSON Server, kita akan mengambil data user dari db.json berdasarkan ID yang di-mock dari token.
+   * Mendapatkan data user saat ini berdasarkan token dan userId dari localStorage.
    * @returns {Promise<Object>} Data user.
    */
   getCurrentUser: async () => {
-    const token = localStorage.getItem('userToken');
-    if (!token) {
-      return null;
-    }
+    const token = localStorage.getItem('token');   // <--- PENTING: Ambil 'token'
+    const userId = localStorage.getItem('userId'); // <--- PENTING: Ambil 'userId'
 
-    // Ekstrak ID user dari token dummy (misal: token_for_user_id_123_timestamp -> ID 123)
-    const userIdMatch = token.match(/_user_id_(\d+)_/); // Sesuaikan regex agar lebih spesifik
-    if (!userIdMatch || !userIdMatch[1]) {
-      console.error('Invalid dummy token format. Logging out.');
-      authService.logout(); // Paksa logout jika format token tidak valid
+    if (!token || !userId) {
       return null;
     }
-    const userId = parseInt(userIdMatch[1], 10);
 
     try {
-      // Dengan JSON Server, kita langsung GET user berdasarkan ID
       const response = await api.get(`/users/${userId}`);
       const user = response.data;
       if (user) {
-        // Pastikan user memiliki properti `id` dan `isVerified`
-        // Jika isVerified tidak ada dari db.json, berikan default (misal: true atau false)
         return { ...user, id: user.id, isVerified: user.isVerified !== undefined ? user.isVerified : true };
       }
-      // Jika user tidak ditemukan di JSON Server (meskipun ada token)
-      console.error('User not found for token. Logging out.');
-      authService.logout();
+      console.error('User not found for token or ID. Returning null.');
       return null;
     } catch (error) {
       console.error('Failed to get current user:', error.response?.data || error.message, error);
-      // Jika ada error (misal 404 dari JSON Server jika ID tidak ada), paksa logout
-      authService.logout();
-      return null;
+      return null; // Biarkan AuthContext yang menangani logout jika ini gagal
     }
   },
 
@@ -111,13 +88,10 @@ const authService = {
    * @param {string} newPassword
    * @returns {Promise<Object>} Respons sukses (mock).
    */
-  changePassword: async (currentPassword, newPassword) => {
-    // Di aplikasi nyata, Anda akan memanggil endpoint API backend di sini.
-    // Untuk JSON Server, ini hanyalah mock.
+  changePassword: async (currentPassword, newPassword) => { // 'currentPassword' sekarang digunakan
     try {
       console.log('Mocking change password for JSON Server. Received currentPassword:', currentPassword);
       console.log('New password:', newPassword);
-      // Simulasikan penundaan API
       await new Promise(resolve => setTimeout(resolve, 500));
       return { message: 'Password berhasil diperbarui (mock).' };
     } catch (error) {
@@ -129,7 +103,6 @@ const authService = {
   // --- Operasi CRUD untuk Utang ---
   getDebts: async (userId) => {
     try {
-      // Filter berdasarkan userId jika diperlukan, atau ambil semua jika admin
       const response = await api.get(`/debts?userId=${userId}`);
       return response.data;
     } catch (error) {
@@ -210,4 +183,4 @@ const authService = {
   },
 };
 
-export default authService;
+export default authService; // <--- PENTING: Ekspor objek authService secara default
