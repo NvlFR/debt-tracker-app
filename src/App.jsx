@@ -7,7 +7,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext'; // Tetap import 
 // Import Toastify
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css'; // Import CSS-nya
-
+import VerifyEmail from './pages/VerifyEmail';
 // Import halaman-halaman
 import LandingPage from './pages/LandingPage';
 import AuthPage from './pages/AuthPage';
@@ -49,7 +49,7 @@ function App() {
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/auth" element={<AuthPage />} />
-
+             <Route path="/verify-email" element={<VerifyEmail />} />
             {/* Rute dashboard yang memerlukan autentikasi */}
             <Route
               path="/dashboard"
@@ -70,6 +70,7 @@ function App() {
 
             {/* Rute fallback untuk halaman tidak ditemukan */}
             <Route path="*" element={<NotFoundPage />} />
+            
           </Routes>
         </AuthProvider>
       </Router>

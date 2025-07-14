@@ -1,7 +1,7 @@
 // src/components/auth/LoginForm.jsx
 import React, { useState } from 'react';
-// import { useNavigate } from 'react-router-dom'; // Tidak perlu lagi useNavigate di sini karena AuthContext yang menanganinya
-import { useAuth } from '../../contexts/AuthContext'; // Import useAuth
+import { useNavigate } from 'react-router-dom'; 
+import { useAuth } from '../../contexts/AuthContext'; 
 
 const LoginForm = () => {
   const [email, setEmail] = useState('');
@@ -9,6 +9,7 @@ const LoginForm = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const { login } = useAuth(); // Ambil fungsi login dari AuthContext
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -16,8 +17,10 @@ const LoginForm = () => {
     setLoading(true);
 
     try {
-      await login(email, password); // Panggil fungsi login dari context
-      // Navigasi dilakukan di dalam AuthContext setelah login sukses
+      await login(email, password); 
+      //toast.success('Login berhasil!');
+      navigate('/dashboard');
+      console.log('success')
     } catch (err) {
       // Error akan dilempar dari authService dan ditangkap di sini
       setError(err.message || 'Email atau password salah. Coba lagi.');

@@ -4,10 +4,13 @@ import LoginForm from '../components/auth/LoginForm';
 import RegisterForm from '../components/auth/RegisterForm';
 import { useTheme } from '../contexts/ThemeContext'; // Untuk tema
 import { SunIcon, MoonIcon } from '@heroicons/react/24/solid'; // Untuk ikon
+import { useNavigate } from 'react-router-dom';
+
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true); // State untuk menentukan apakah mode login atau register
   const { theme, toggleTheme } = useTheme();
+   const navigate = useNavigate();
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4

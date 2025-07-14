@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { Link, Outlet } from 'react-router-dom';
 import { useTheme } from '../contexts/ThemeContext';
 import { useAuth } from '../contexts/AuthContext'; // Import useAuth
+
 import {
   HomeIcon,
   ChartBarIcon,
