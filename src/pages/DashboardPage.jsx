@@ -4,20 +4,26 @@ import { toast } from 'react-toastify';
 import { useAuth } from '../contexts/AuthContext';
 import {
   CurrencyDollarIcon,
-  CurrencyEuroIcon,
   ReceiptPercentIcon,
-} from '@heroicons/react/24/outline'; // Sesuaikan ikon jika perlu
-import LoadingSpinner from '../components/common/LoadingSpinner'; // Pastikan path benar
+  ChartBarIcon,
+  ArrowTrendingUpIcon,
+  ArrowTrendingDownIcon,
+  ClockIcon,
+  CheckCircleIcon,
+  ExclamationTriangleIcon,
+  BanknotesIcon,
+} from '@heroicons/react/24/outline';
+import LoadingSpinner from '../components/common/LoadingSpinner';
 
 const DashboardPage = () => {
-  const { currentUser, authService, isLoading: authLoading } = useAuth(); // Ambil authLoading
+  const { currentUser, authService, isLoading: authLoading } = useAuth();
   const [dashboardData, setDashboardData] = useState({
     totalDebts: 0,
     totalReceivables: 0,
     activeDebts: 0,
     activeReceivables: 0,
   });
-  const [isLoading, setIsLoading] = useState(true); // Loading untuk data dashboard
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const formatRupiah = (amount) => {
@@ -29,11 +35,8 @@ const DashboardPage = () => {
   };
 
   const fetchDashboardData = useCallback(async () => {
-    // Pastikan currentUser dan authService tersedia sebelum melakukan fetch
     if (!currentUser || !currentUser.id || !authService || !authService.getDebts || !authService.getReceivables) {
-      // Ini adalah kondisi yang menangani "User not logged in or user ID is missing."
-      // Jika AuthContext masih memuat, kita tunggu. Jika user null, kita tidak fetch.
-      setIsLoading(false); // Penting: set false agar tidak stuck di loading jika user null
+      setIsLoading(false);
       return;
     }
 
@@ -55,7 +58,6 @@ const DashboardPage = () => {
         activeDebts,
         activeReceivables,
       });
-      // toast.success("Data dashboard berhasil dimuat!"); // Opsional: notifikasi sukses
     } catch (err) {
       console.error("Failed to fetch dashboard data:", err);
       setError("Gagal memuat data dashboard.");
@@ -63,26 +65,21 @@ const DashboardPage = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [currentUser, authService]); // Dependencies untuk useCallback
+  }, [currentUser, authService]);
 
   useEffect(() => {
-    // Hanya fetch data dashboard jika AuthContext sudah selesai memuat (authLoading === false)
-    // DAN currentUser sudah ada.
     if (!authLoading && currentUser) {
       fetchDashboardData();
     } else if (!authLoading && !currentUser) {
-        // Jika authLoading selesai tapi currentUser null, berarti user memang tidak login.
-        setIsLoading(false); // Pastikan state loading di DashboardPage juga false
-        setError("User not logged in or user ID is missing."); // Tampilkan pesan ini di UI
+      setIsLoading(false);
+      setError("User not logged in or user ID is missing.");
     }
-  }, [authLoading, currentUser, fetchDashboardData]); // Dependencies untuk useEffect
+  }, [authLoading, currentUser, fetchDashboardData]);
 
-  // Tampilkan spinner jika AuthContext masih memuat ATAU data dashboard sedang dimuat
   if (authLoading || isLoading) {
     return <LoadingSpinner />;
   }
 
-  // Tampilkan pesan error jika ada
   if (error) {
     return (
       <div className="flex justify-center items-center h-full text-red-600 dark:text-red-400">
@@ -91,55 +88,259 @@ const DashboardPage = () => {
     );
   }
 
+  const netBalance = dashboardData.totalReceivables - dashboardData.totalDebts;
+
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6 text-gray-900 dark:text-gray-100">Dashboard</h1>
-
-      {/* Grid for key metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        {/* Total Utang */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Utang</p>
-            <p className="text-2xl font-semibold text-red-600 dark:text-red-400">{formatRupiah(dashboardData.totalDebts)}</p>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
+      <div className="container mx-auto p-6 max-w-7xl">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                Dashboard
+              </h1>
+              <p className="text-gray-600 dark:text-gray-300 mt-2">
+                Selamat datang kembali, {currentUser?.name || 'User'}
+              </p>
+            </div>
+            <div className="hidden md:flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-sm text-gray-500 dark:text-gray-400">Saldo Bersih</p>
+                <p className={`text-2xl font-bold ${netBalance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                  {formatRupiah(netBalance)}
+                </p>
+              </div>
+              {netBalance >= 0 ? (
+                <ArrowTrendingUpIcon className="h-8 w-8 text-green-500" />
+              ) : (
+                <ArrowTrendingDownIcon className="h-8 w-8 text-red-500" />
+              )}
+            </div>
           </div>
-          <CurrencyDollarIcon className="h-10 w-10 text-red-500 dark:text-red-400" />
         </div>
 
-        {/* Total Piutang */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Total Piutang</p>
-            <p className="text-2xl font-semibold text-green-600 dark:text-green-400">{formatRupiah(dashboardData.totalReceivables)}</p>
+        {/* Main Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {/* Total Utang Card */}
+          <div className="group relative bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-red-200 dark:hover:border-red-800">
+            <div className="absolute inset-0 bg-gradient-to-r from-red-500/5 to-pink-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-red-100 dark:bg-red-900/30 rounded-xl">
+                  <ArrowTrendingDownIcon className="h-8 w-8 text-red-600 dark:text-red-400" />
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Total Utang
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-3xl font-bold text-red-600 dark:text-red-400">
+                  {formatRupiah(dashboardData.totalDebts)}
+                </p>
+                <div className="flex items-center space-x-2">
+                  <ExclamationTriangleIcon className="h-4 w-4 text-red-500" />
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    Perlu perhatian
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
-          <CurrencyEuroIcon className="h-10 w-10 text-green-500 dark:text-green-400" />
+
+          {/* Total Piutang Card */}
+          <div className="group relative bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-green-200 dark:hover:border-green-800">
+            <div className="absolute inset-0 bg-gradient-to-r from-green-500/5 to-emerald-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-green-100 dark:bg-green-900/30 rounded-xl">
+                  <ArrowTrendingUpIcon className="h-8 w-8 text-green-600 dark:text-green-400" />
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Total Piutang
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-3xl font-bold text-green-600 dark:text-green-400">
+                  {formatRupiah(dashboardData.totalReceivables)}
+                </p>
+                <div className="flex items-center space-x-2">
+                  <CheckCircleIcon className="h-4 w-4 text-green-500" />
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    Pemasukan potensial
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Utang Aktif Card */}
+          <div className="group relative bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-yellow-200 dark:hover:border-yellow-800">
+            <div className="absolute inset-0 bg-gradient-to-r from-yellow-500/5 to-orange-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-yellow-100 dark:bg-yellow-900/30 rounded-xl">
+                  <ClockIcon className="h-8 w-8 text-yellow-600 dark:text-yellow-400" />
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Utang Aktif
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-3xl font-bold text-yellow-600 dark:text-yellow-400">
+                  {dashboardData.activeDebts}
+                </p>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    Transaksi pending
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Piutang Aktif Card */}
+          <div className="group relative bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700 hover:border-blue-200 dark:hover:border-blue-800">
+            <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative">
+              <div className="flex items-center justify-between mb-4">
+                <div className="p-3 bg-blue-100 dark:bg-blue-900/30 rounded-xl">
+                  <BanknotesIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+                </div>
+                <div className="text-right">
+                  <p className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                    Piutang Aktif
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">
+                  {dashboardData.activeReceivables}
+                </p>
+                <div className="flex items-center space-x-2">
+                  <span className="text-sm text-gray-600 dark:text-gray-300">
+                    Menunggu pembayaran
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Utang Aktif */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Utang Aktif</p>
-            <p className="text-2xl font-semibold text-yellow-600 dark:text-yellow-400">{dashboardData.activeDebts}</p>
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {/* Balance Summary */}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Ringkasan Keuangan
+              </h3>
+              <ChartBarIcon className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+                  <span className="text-gray-700 dark:text-gray-300">Total Piutang</span>
+                </div>
+                <span className="font-semibold text-green-600 dark:text-green-400">
+                  {formatRupiah(dashboardData.totalReceivables)}
+                </span>
+              </div>
+              
+              <div className="flex justify-between items-center p-4 bg-gray-50 dark:bg-gray-700 rounded-xl">
+                <div className="flex items-center space-x-3">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-gray-700 dark:text-gray-300">Total Utang</span>
+                </div>
+                <span className="font-semibold text-red-600 dark:text-red-400">
+                  {formatRupiah(dashboardData.totalDebts)}
+                </span>
+              </div>
+              
+              <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                    Saldo Bersih
+                  </span>
+                  <span className={`text-xl font-bold ${netBalance >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                    {formatRupiah(netBalance)}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
-          <ReceiptPercentIcon className="h-10 w-10 text-yellow-500 dark:text-yellow-400" />
+
+          {/* Activity Status */}
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+                Status Aktivitas
+              </h3>
+              <ReceiptPercentIcon className="h-6 w-6 text-gray-500 dark:text-gray-400" />
+            </div>
+            
+            <div className="grid grid-cols-2 gap-4">
+              <div className="text-center p-4 bg-yellow-50 dark:bg-yellow-900/20 rounded-xl">
+                <div className="text-3xl font-bold text-yellow-600 dark:text-yellow-400 mb-2">
+                  {dashboardData.activeDebts}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  Utang Pending
+                </div>
+              </div>
+              
+              <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl">
+                <div className="text-3xl font-bold text-blue-600 dark:text-blue-400 mb-2">
+                  {dashboardData.activeReceivables}
+                </div>
+                <div className="text-sm text-gray-600 dark:text-gray-300">
+                  Piutang Pending
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-xl">
+              <p className="text-sm text-gray-700 dark:text-gray-300 text-center">
+                {dashboardData.activeDebts + dashboardData.activeReceivables === 0 
+                  ? "Tidak ada transaksi pending" 
+                  : `${dashboardData.activeDebts + dashboardData.activeReceivables} transaksi memerlukan tindak lanjut`
+                }
+              </p>
+            </div>
+          </div>
         </div>
 
-        {/* Piutang Aktif */}
-        <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Piutang Aktif</p>
-            <p className="text-2xl font-semibold text-blue-600 dark:text-blue-400">{dashboardData.activeReceivables}</p>
+        {/* Chart Section */}
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-semibold text-gray-900 dark:text-gray-100">
+              Analisis Keuangan
+            </h2>
+            <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+              <ChartBarIcon className="h-5 w-5" />
+              <span>Segera Hadir</span>
+            </div>
           </div>
-          <ReceiptPercentIcon className="h-10 w-10 text-blue-500 dark:text-blue-400" />
-        </div>
-      </div>
-
-      {/* Bagian untuk grafik atau daftar transaksi terbaru (belum diimplementasikan) */}
-      <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-        <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Grafik Ringkasan (Segera Hadir)</h2>
-        <p className="text-gray-600 dark:text-gray-300">Bagian ini akan menampilkan grafik utang dan piutang Anda.</p>
-        <div className="h-64 bg-gray-100 dark:bg-gray-700 rounded-md flex items-center justify-center text-gray-400 dark:text-gray-500 mt-4">
-          Grafik akan muncul di sini
+          
+          <div className="bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-700 dark:to-gray-800 rounded-xl p-12 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gray-200 dark:bg-gray-600 rounded-full mb-4">
+              <ChartBarIcon className="h-8 w-8 text-gray-500 dark:text-gray-400" />
+            </div>
+            <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Grafik Analisis
+            </h3>
+            <p className="text-gray-600 dark:text-gray-400 max-w-md mx-auto">
+              Fitur visualisasi data utang dan piutang dalam bentuk grafik interaktif akan segera tersedia untuk membantu Anda menganalisis tren keuangan.
+            </p>
+          </div>
         </div>
       </div>
     </div>

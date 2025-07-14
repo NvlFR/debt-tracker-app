@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
     personName: '',
-    amount: '', // Ini akan diisi angka
+    amount: '',
     transactionDate: new Date().toISOString().split('T')[0],
     dueDate: '',
     description: '',
@@ -20,8 +20,6 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
     if (initialData && Object.keys(initialData).length > 0) {
       setFormData({
         personName: initialData.personName || '',
-        // <--- PENTING: Pastikan initialData.amount juga dikonversi menjadi Number
-        // Karena data dari db.json bisa saja masih string jika sudah ada yang tersimpan string sebelumnya
         amount: Number(initialData.amount) || '',
         transactionDate: initialData.transactionDate || new Date().toISOString().split('T')[0],
         dueDate: initialData.dueDate || '',
@@ -37,26 +35,22 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
   const handleChange = (e) => {
     const { name, value } = e.target;
 
-    // <--- PENTING: Tambahkan logika konversi untuk 'amount'
     let newValue = value;
     if (name === 'amount') {
-      // Konversi ke number. Jika input kosong, biarkan kosong string untuk validasi
       newValue = value === '' ? '' : Number(value);
-      // Anda juga bisa menambahkan validasi di sini untuk NaN
       if (isNaN(newValue) && newValue !== '') {
         setErrors(prevErrors => ({ ...prevErrors, amount: 'Jumlah harus angka valid.' }));
       } else {
-        setErrors(prevErrors => ({ ...prevErrors, amount: '' })); // Hapus error jika valid
+        setErrors(prevErrors => ({ ...prevErrors, amount: '' }));
       }
     }
 
     setFormData((prevData) => ({
       ...prevData,
-      [name]: newValue, // Gunakan newValue yang sudah dikonversi
+      [name]: newValue,
     }));
 
-    // Clear error for the field being changed (jika bukan amount, atau amount sudah valid)
-    if (errors[name] && name !== 'amount') { // Hindari menghapus error amount prematur
+    if (errors[name] && name !== 'amount') {
       setErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
     }
   };
@@ -66,7 +60,6 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
     if (!formData.personName.trim()) {
       newErrors.personName = `${type === 'debt' ? 'Nama Pemberi Utang' : 'Nama Penerima Piutang'} tidak boleh kosong.`;
     }
-    // Pastikan amount adalah angka dan positif
     if (!formData.amount || isNaN(formData.amount) || parseFloat(formData.amount) <= 0) {
       newErrors.amount = 'Jumlah harus angka positif.';
     }
@@ -85,17 +78,16 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
     }
 
     try {
-      // Saat submit, kita pastikan lagi amount adalah angka
       const dataToSubmit = {
         ...formData,
-        amount: Number(formData.amount), // Konversi akhir sebelum dikirim
+        amount: Number(formData.amount),
       };
-      if (isNaN(dataToSubmit.amount)) { // Double-check for safety
+      if (isNaN(dataToSubmit.amount)) {
         toast.error("Jumlah yang dimasukkan tidak valid.");
         return;
       }
 
-      await onSubmit(dataToSubmit); // Kirim data yang sudah divalidasi dan dikonversi
+      await onSubmit(dataToSubmit);
       toast.success(`${type === 'debt' ? 'Utang' : 'Piutang'} berhasil disimpan!`);
       onClose();
     } catch (error) {
@@ -104,187 +96,269 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
     }
   };
 
+  const formatCurrency = (amount) => {
+    if (!amount) return '';
+    return new Intl.NumberFormat('id-ID', {
+      style: 'currency',
+      currency: 'IDR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount);
+  };
+
   return (
-    <form onSubmit={handleSubmit} className="p-4 bg-white dark:bg-gray-800 rounded-lg">
-      <h2 className="text-xl font-bold mb-4 text-gray-900 dark:text-gray-100">
-        {initialData.id ? 'Edit' : 'Tambah'} {type === 'debt' ? 'Utang' : 'Piutang'}
-      </h2>
-
-      {/* Person Name */}
-      <div className="mb-4">
-        <label htmlFor="personName" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Pihaknya
-        </label>
-        <input
-          type="text"
-          id="personName"
-          name="personName"
-          value={formData.personName}
-          onChange={handleChange}
-          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-light focus:ring focus:ring-primary-light focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 ${
-            errors.personName ? 'border-red-500' : ''
-          }`}
-          placeholder={type === 'debt' ? 'Nama Pemberi Utang' : 'Nama Penerima Piutang'}
-          required
-        />
-        {errors.personName && <p className="text-red-500 text-xs mt-1">{errors.personName}</p>}
-      </div>
-
-      {/* Amount */}
-      <div className="mb-4">
-        <label htmlFor="amount" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Jumlah/Nominal (Rp)
-        </label>
-        <input
-          type="number" // Tetap type="number" untuk UI
-          id="amount"
-          name="amount"
-          value={formData.amount} // Ini akan menjadi angka atau string kosong
-          onChange={handleChange}
-          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-light focus:ring focus:ring-primary-light focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 ${
-            errors.amount ? 'border-red-500' : ''
-          }`}
-          placeholder="e.g., 1000000"
-          required
-        />
-        {errors.amount && <p className="text-red-500 text-xs mt-1">{errors.amount}</p>}
-      </div>
-
-      {/* Transaction Date */}
-      <div className="mb-4">
-        <label htmlFor="transactionDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Tanggal Transaksi
-        </label>
-        <input
-          type="date"
-          id="transactionDate"
-          name="transactionDate"
-          value={formData.transactionDate}
-          onChange={handleChange}
-          className={`mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-light focus:ring focus:ring-primary-light focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100 ${
-            errors.transactionDate ? 'border-red-500' : ''
-          }`}
-          required
-        />
-        {errors.transactionDate && <p className="text-red-500 text-xs mt-1">{errors.transactionDate}</p>}
-      </div>
-
-      {/* Due Date (Optional) */}
-      <div className="mb-4">
-        <label htmlFor="dueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Tanggal Jatuh Tempo (Opsional)
-        </label>
-        <input
-          type="date"
-          id="dueDate"
-          name="dueDate"
-          value={formData.dueDate}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-light focus:ring focus:ring-primary-light focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-        />
-      </div>
-
-      {/* Description */}
-      <div className="mb-4">
-        <label htmlFor="description" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Deskripsi
-        </label>
-        <textarea
-          id="description"
-          name="description"
-          value={formData.description}
-          onChange={handleChange}
-          rows="3"
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-light focus:ring focus:ring-primary-light focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-          placeholder="Deskripsi singkat tentang transaksi ini"
-        ></textarea>
-      </div>
-
-      {/* Status */}
-      <div className="mb-4">
-        <label htmlFor="status" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Status
-        </label>
-        <select
-          id="status"
-          name="status"
-          value={formData.status}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-light focus:ring focus:ring-primary-light focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-        >
-          <option value="pending">Belum Lunas</option>
-          <option value="paid">Lunas</option>
-        </select>
-      </div>
-
-      {/* Category */}
-      <div className="mb-4">
-        <label htmlFor="category" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          Kategori
-        </label>
-        <select
-          id="category"
-          name="category"
-          value={formData.category}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-light focus:ring focus:ring-primary-light focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-        >
-          <option value="Pribadi">Pribadi</option>
-          <option value="Bisnis">Bisnis</option>
-          <option value="Keluarga">Keluarga</option>
-          <option value="Lainnya">Lainnya</option>
-        </select>
-      </div>
-
-      {/* Payment Date (only if status is 'paid') */}
-      {formData.status === 'paid' && (
-        <div className="mb-4">
-          <label htmlFor="paymentDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-            Tanggal Pembayaran/Penyelesaian (Jika sudah lunas)
-          </label>
-          <input
-            type="date"
-            id="paymentDate"
-            name="paymentDate"
-            value={formData.paymentDate}
-            onChange={handleChange}
-            className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-light focus:ring focus:ring-primary-light focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-          />
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 px-8 py-6 rounded-t-2xl">
+          <h2 className="text-2xl font-bold text-white mb-2">
+            {initialData.id ? 'Edit' : 'Tambah'} {type === 'debt' ? 'Utang' : 'Piutang'}
+          </h2>
+          <p className="text-blue-100 text-sm">
+            {type === 'debt' ? 'Kelola data utang Anda' : 'Kelola data piutang Anda'}
+          </p>
         </div>
-      )}
 
-      {/* Proof URL (Optional) */}
-      <div className="mb-4">
-        <label htmlFor="proofUrl" className="block text-sm font-medium text-gray-700 dark:text-gray-300">
-          URL Bukti Transaksi (Opsional)
-        </label>
-        <input
-          type="text"
-          id="proofUrl"
-          name="proofUrl"
-          value={formData.proofUrl}
-          onChange={handleChange}
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-primary-light focus:ring focus:ring-primary-light focus:ring-opacity-50 dark:bg-gray-700 dark:border-gray-600 dark:text-gray-100"
-          placeholder="URL gambar bukti pembayaran, dll."
-        />
-      </div>
+        <form onSubmit={handleSubmit} className="p-8 space-y-6">
+          {/* Person Name */}
+          <div className="group">
+            <label htmlFor="personName" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              {type === 'debt' ? 'Nama Pemberi Utang' : 'Nama Penerima Piutang'} *
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                id="personName"
+                name="personName"
+                value={formData.personName}
+                onChange={handleChange}
+                className={`w-full px-4 py-3 rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 ${
+                  errors.personName 
+                    ? 'border-red-400 bg-red-50 dark:bg-red-900/20' 
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                }`}
+                placeholder={type === 'debt' ? 'Masukkan nama pemberi utang...' : 'Masukkan nama penerima piutang...'}
+                required
+              />
+              {errors.personName && (
+                <div className="absolute -bottom-6 left-0 flex items-center text-red-500 text-xs">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.personName}
+                </div>
+              )}
+            </div>
+          </div>
 
-      <div className="flex justify-end space-x-2 mt-6">
-        <button
-          type="button"
-          onClick={onClose}
-          className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 dark:text-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-700 transition duration-200"
-        >
-          Batal
-        </button>
-        <button
-          type="submit"
-          className="px-4 py-2 bg-primary-light text-white rounded-md hover:bg-primary-dark transition duration-200"
-        >
-          Simpan
-        </button>
+          {/* Amount */}
+          <div className="group">
+            <label htmlFor="amount" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Jumlah/Nominal *
+            </label>
+            <div className="relative">
+              <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
+                <span className="text-gray-500 dark:text-gray-400 font-medium">Rp</span>
+              </div>
+              <input
+                type="number"
+                id="amount"
+                name="amount"
+                value={formData.amount}
+                onChange={handleChange}
+                className={`w-full pl-12 pr-4 py-3 rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 ${
+                  errors.amount 
+                    ? 'border-red-400 bg-red-50 dark:bg-red-900/20' 
+                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                }`}
+                placeholder="1,000,000"
+                required
+              />
+              {formData.amount && (
+                <div className="absolute -bottom-6 left-0 text-xs text-gray-500 dark:text-gray-400">
+                  {formatCurrency(formData.amount)}
+                </div>
+              )}
+              {errors.amount && (
+                <div className="absolute -bottom-6 right-0 flex items-center text-red-500 text-xs">
+                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                  {errors.amount}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Date Fields */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Transaction Date */}
+            <div className="group">
+              <label htmlFor="transactionDate" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Tanggal Transaksi *
+              </label>
+              <div className="relative">
+                <input
+                  type="date"
+                  id="transactionDate"
+                  name="transactionDate"
+                  value={formData.transactionDate}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 ${
+                    errors.transactionDate 
+                      ? 'border-red-400 bg-red-50 dark:bg-red-900/20' 
+                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                  }`}
+                  required
+                />
+                {errors.transactionDate && (
+                  <div className="absolute -bottom-6 left-0 flex items-center text-red-500 text-xs">
+                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    </svg>
+                    {errors.transactionDate}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Due Date */}
+            <div className="group">
+              <label htmlFor="dueDate" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Tanggal Jatuh Tempo
+              </label>
+              <input
+                type="date"
+                id="dueDate"
+                name="dueDate"
+                value={formData.dueDate}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              />
+            </div>
+          </div>
+
+          {/* Description */}
+          <div className="group">
+            <label htmlFor="description" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              Deskripsi
+            </label>
+            <textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              rows="4"
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 resize-none"
+              placeholder="Deskripsi singkat tentang transaksi ini..."
+            />
+          </div>
+
+          {/* Status and Category */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Status */}
+            <div className="group">
+              <label htmlFor="status" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Status
+              </label>
+              <div className="relative">
+                <select
+                  id="status"
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 appearance-none"
+                >
+                  <option value="pending">Belum Lunas</option>
+                  <option value="paid">Lunas</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+
+            {/* Category */}
+            <div className="group">
+              <label htmlFor="category" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Kategori
+              </label>
+              <div className="relative">
+                <select
+                  id="category"
+                  name="category"
+                  value={formData.category}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 appearance-none"
+                >
+                  <option value="Pribadi">Pribadi</option>
+                  <option value="Bisnis">Bisnis</option>
+                  <option value="Keluarga">Keluarga</option>
+                  <option value="Lainnya">Lainnya</option>
+                </select>
+                <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                  <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Payment Date (conditional) */}
+          {formData.status === 'paid' && (
+            <div className="group animate-fadeIn">
+              <label htmlFor="paymentDate" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Tanggal Pembayaran/Penyelesaian
+              </label>
+              <input
+                type="date"
+                id="paymentDate"
+                name="paymentDate"
+                value={formData.paymentDate}
+                onChange={handleChange}
+                className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              />
+            </div>
+          )}
+
+          {/* Proof URL */}
+          <div className="group">
+            <label htmlFor="proofUrl" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              URL Bukti Transaksi
+            </label>
+            <input
+              type="url"
+              id="proofUrl"
+              name="proofUrl"
+              value={formData.proofUrl}
+              onChange={handleChange}
+              className="w-full px-4 py-3 rounded-xl border-2 border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100"
+              placeholder="https://example.com/bukti-transaksi.jpg"
+            />
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200 dark:border-gray-600">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-6 py-3 border-2 border-gray-300 dark:border-gray-600 rounded-xl text-gray-700 dark:text-gray-300 font-medium hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transform hover:scale-105 shadow-lg"
+            >
+              {initialData.id ? 'Update' : 'Simpan'} {type === 'debt' ? 'Utang' : 'Piutang'}
+            </button>
+          </div>
+        </form>
       </div>
-    </form>
+    </div>
   );
 };
 
