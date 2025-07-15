@@ -1,33 +1,34 @@
 // src/components/common/TransactionForm.jsx
-import React, { useState, useEffect } from 'react';
-import { toast } from 'react-toastify';
+import React, { useState, useEffect } from "react";
+import { toast } from "react-toastify";
 
 const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
   const [formData, setFormData] = useState({
-    personName: '',
-    amount: '',
-    transactionDate: new Date().toISOString().split('T')[0],
-    dueDate: '',
-    description: '',
-    status: 'pending',
-    category: 'Pribadi',
-    paymentDate: '',
-    proofUrl: '',
+    personName: "",
+    amount: "",
+    transactionDate: new Date().toISOString().split("T")[0],
+    dueDate: "",
+    description: "",
+    status: "pending",
+    category: "Pribadi",
+    paymentDate: "",
+    proofUrl: "",
   });
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
     if (initialData && Object.keys(initialData).length > 0) {
       setFormData({
-        personName: initialData.personName || '',
-        amount: Number(initialData.amount) || '',
-        transactionDate: initialData.transactionDate || new Date().toISOString().split('T')[0],
-        dueDate: initialData.dueDate || '',
-        description: initialData.description || '',
-        status: initialData.status || 'pending',
-        category: initialData.category || 'Pribadi',
-        paymentDate: initialData.paymentDate || '',
-        proofUrl: initialData.proofUrl || '',
+        personName: initialData.personName || "",
+        amount: Number(initialData.amount ?? ""),
+        transactionDate:
+          initialData.transactionDate || new Date().toISOString().split("T")[0],
+        dueDate: initialData.dueDate || "",
+        description: initialData.description || "",
+        status: initialData.status || "pending",
+        category: initialData.category || "Pribadi",
+        paymentDate: initialData.paymentDate || "",
+        proofUrl: initialData.proofUrl || "",
       });
     }
   }, [initialData]);
@@ -36,12 +37,15 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
     const { name, value } = e.target;
 
     let newValue = value;
-    if (name === 'amount') {
-      newValue = value === '' ? '' : Number(value);
-      if (isNaN(newValue) && newValue !== '') {
-        setErrors(prevErrors => ({ ...prevErrors, amount: 'Jumlah harus angka valid.' }));
+    if (name === "amount") {
+      newValue = value === "" ? "" : Number(value);
+      if (isNaN(newValue) && newValue !== "") {
+        setErrors((prevErrors) => ({
+          ...prevErrors,
+          amount: "Jumlah harus angka valid.",
+        }));
       } else {
-        setErrors(prevErrors => ({ ...prevErrors, amount: '' }));
+        setErrors((prevErrors) => ({ ...prevErrors, amount: "" }));
       }
     }
 
@@ -50,21 +54,27 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
       [name]: newValue,
     }));
 
-    if (errors[name] && name !== 'amount') {
-      setErrors((prevErrors) => ({ ...prevErrors, [name]: '' }));
+    if (errors[name] && name !== "amount") {
+      setErrors((prevErrors) => ({ ...prevErrors, [name]: "" }));
     }
   };
 
   const validateForm = () => {
     let newErrors = {};
     if (!formData.personName.trim()) {
-      newErrors.personName = `${type === 'debt' ? 'Nama Pemberi Utang' : 'Nama Penerima Piutang'} tidak boleh kosong.`;
+      newErrors.personName = `${
+        type === "debt" ? "Nama Pemberi Utang" : "Nama Penerima Piutang"
+      } tidak boleh kosong.`;
     }
-    if (!formData.amount || isNaN(formData.amount) || parseFloat(formData.amount) <= 0) {
-      newErrors.amount = 'Jumlah harus angka positif.';
+    if (
+      !formData.amount ||
+      isNaN(formData.amount) ||
+      parseFloat(formData.amount) <= 0
+    ) {
+      newErrors.amount = "Jumlah harus angka positif.";
     }
     if (!formData.transactionDate) {
-      newErrors.transactionDate = 'Tanggal transaksi tidak boleh kosong.';
+      newErrors.transactionDate = "Tanggal transaksi tidak boleh kosong.";
     }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -73,7 +83,9 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!validateForm()) {
-      toast.error("Mohon lengkapi semua bidang yang wajib diisi dan pastikan formatnya benar.");
+      toast.error(
+        "Mohon lengkapi semua bidang yang wajib diisi dan pastikan formatnya benar."
+      );
       return;
     }
 
@@ -88,19 +100,25 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
       }
 
       await onSubmit(dataToSubmit);
-      toast.success(`${type === 'debt' ? 'Utang' : 'Piutang'} berhasil disimpan!`);
+      toast.success(
+        `${type === "debt" ? "Utang" : "Piutang"} berhasil disimpan!`
+      );
       onClose();
     } catch (error) {
       console.error("Form submission error:", error);
-      toast.error(`Gagal menyimpan ${type === 'debt' ? 'utang' : 'piutang'}: ${error.message || 'Terjadi kesalahan.'}`);
+      toast.error(
+        `Gagal menyimpan ${type === "debt" ? "utang" : "piutang"}: ${
+          error.message || "Terjadi kesalahan."
+        }`
+      );
     }
   };
 
   const formatCurrency = (amount) => {
-    if (!amount) return '';
-    return new Intl.NumberFormat('id-ID', {
-      style: 'currency',
-      currency: 'IDR',
+    if (!amount) return "";
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount);
@@ -112,18 +130,25 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-700 dark:to-purple-700 px-8 py-6 rounded-t-2xl">
           <h2 className="text-2xl font-bold text-white mb-2">
-            {initialData.id ? 'Edit' : 'Tambah'} {type === 'debt' ? 'Utang' : 'Piutang'}
+            {initialData.id ? "Edit" : "Tambah"}{" "}
+            {type === "debt" ? "Utang" : "Piutang"}
           </h2>
           <p className="text-blue-100 text-sm">
-            {type === 'debt' ? 'Kelola data utang Anda' : 'Kelola data piutang Anda'}
+            {type === "debt"
+              ? "Kelola data utang Anda"
+              : "Kelola data piutang Anda"}
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="p-8 space-y-6">
           {/* Person Name */}
           <div className="group">
-            <label htmlFor="personName" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
-              {type === 'debt' ? 'Nama Pemberi Utang' : 'Nama Penerima Piutang'} *
+            <label
+              htmlFor="personName"
+              className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+            >
+              {type === "debt" ? "Nama Pemberi Utang" : "Nama Penerima Piutang"}{" "}
+              *
             </label>
             <div className="relative">
               <input
@@ -133,17 +158,29 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
                 value={formData.personName}
                 onChange={handleChange}
                 className={`w-full px-4 py-3 rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 ${
-                  errors.personName 
-                    ? 'border-red-400 bg-red-50 dark:bg-red-900/20' 
-                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                  errors.personName
+                    ? "border-red-400 bg-red-50 dark:bg-red-900/20"
+                    : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                 }`}
-                placeholder={type === 'debt' ? 'Masukkan nama pemberi utang...' : 'Masukkan nama penerima piutang...'}
+                placeholder={
+                  type === "debt"
+                    ? "Masukkan nama pemberi utang..."
+                    : "Masukkan nama penerima piutang..."
+                }
                 required
               />
               {errors.personName && (
                 <div className="absolute -bottom-6 left-0 flex items-center text-red-500 text-xs">
-                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   {errors.personName}
                 </div>
@@ -153,12 +190,17 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
 
           {/* Amount */}
           <div className="group">
-            <label htmlFor="amount" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="amount"
+              className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+            >
               Jumlah/Nominal *
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 flex items-center pl-4 pointer-events-none">
-                <span className="text-gray-500 dark:text-gray-400 font-medium">Rp</span>
+                <span className="text-gray-500 dark:text-gray-400 font-medium">
+                  Rp
+                </span>
               </div>
               <input
                 type="number"
@@ -167,9 +209,9 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
                 value={formData.amount}
                 onChange={handleChange}
                 className={`w-full pl-12 pr-4 py-3 rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 ${
-                  errors.amount 
-                    ? 'border-red-400 bg-red-50 dark:bg-red-900/20' 
-                    : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                  errors.amount
+                    ? "border-red-400 bg-red-50 dark:bg-red-900/20"
+                    : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                 }`}
                 placeholder="1,000,000"
                 required
@@ -181,8 +223,16 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
               )}
               {errors.amount && (
                 <div className="absolute -bottom-6 right-0 flex items-center text-red-500 text-xs">
-                  <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  <svg
+                    className="w-4 h-4 mr-1"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                   {errors.amount}
                 </div>
@@ -194,7 +244,10 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Transaction Date */}
             <div className="group">
-              <label htmlFor="transactionDate" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="transactionDate"
+                className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Tanggal Transaksi *
               </label>
               <div className="relative">
@@ -205,16 +258,24 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
                   value={formData.transactionDate}
                   onChange={handleChange}
                   className={`w-full px-4 py-3 rounded-xl border-2 transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-gray-100 ${
-                    errors.transactionDate 
-                      ? 'border-red-400 bg-red-50 dark:bg-red-900/20' 
-                      : 'border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500'
+                    errors.transactionDate
+                      ? "border-red-400 bg-red-50 dark:bg-red-900/20"
+                      : "border-gray-200 dark:border-gray-600 hover:border-gray-300 dark:hover:border-gray-500"
                   }`}
                   required
                 />
                 {errors.transactionDate && (
                   <div className="absolute -bottom-6 left-0 flex items-center text-red-500 text-xs">
-                    <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                    <svg
+                      className="w-4 h-4 mr-1"
+                      fill="currentColor"
+                      viewBox="0 0 20 20"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"
+                        clipRule="evenodd"
+                      />
                     </svg>
                     {errors.transactionDate}
                   </div>
@@ -224,7 +285,10 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
 
             {/* Due Date */}
             <div className="group">
-              <label htmlFor="dueDate" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="dueDate"
+                className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Tanggal Jatuh Tempo
               </label>
               <input
@@ -240,7 +304,10 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
 
           {/* Description */}
           <div className="group">
-            <label htmlFor="description" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="description"
+              className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+            >
               Deskripsi
             </label>
             <textarea
@@ -258,7 +325,10 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Status */}
             <div className="group">
-              <label htmlFor="status" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="status"
+                className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Status
               </label>
               <div className="relative">
@@ -273,8 +343,16 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
                   <option value="paid">Lunas</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <svg
+                    className="w-5 h-5 text-gray-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
               </div>
@@ -282,7 +360,10 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
 
             {/* Category */}
             <div className="group">
-              <label htmlFor="category" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="category"
+                className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Kategori
               </label>
               <div className="relative">
@@ -299,8 +380,16 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
                   <option value="Lainnya">Lainnya</option>
                 </select>
                 <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
-                  <svg className="w-5 h-5 text-gray-400" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                  <svg
+                    className="w-5 h-5 text-gray-400"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
                   </svg>
                 </div>
               </div>
@@ -308,9 +397,12 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
           </div>
 
           {/* Payment Date (conditional) */}
-          {formData.status === 'paid' && (
+          {formData.status === "paid" && (
             <div className="group animate-fadeIn">
-              <label htmlFor="paymentDate" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+              <label
+                htmlFor="paymentDate"
+                className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+              >
                 Tanggal Pembayaran/Penyelesaian
               </label>
               <input
@@ -326,7 +418,10 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
 
           {/* Proof URL */}
           <div className="group">
-            <label htmlFor="proofUrl" className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+            <label
+              htmlFor="proofUrl"
+              className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2"
+            >
               URL Bukti Transaksi
             </label>
             <input
@@ -353,7 +448,8 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
               type="submit"
               className="flex-1 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transform hover:scale-105 shadow-lg"
             >
-              {initialData.id ? 'Update' : 'Simpan'} {type === 'debt' ? 'Utang' : 'Piutang'}
+              {initialData.id ? "Update" : "Simpan"}{" "}
+              {type === "debt" ? "Utang" : "Piutang"}
             </button>
           </div>
         </form>

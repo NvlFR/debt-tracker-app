@@ -1,21 +1,27 @@
 // src/pages/SettingsPage.jsx
-import React, { useState } from 'react';
-import { Cog6ToothIcon, BellAlertIcon, PaintBrushIcon } from '@heroicons/react/24/outline';
-import { useTheme } from '../contexts/ThemeContext'; // Akan kita gunakan lagi untuk pengaturan tema
+import React, { useState } from "react";
+import {
+  Cog6ToothIcon,
+  BellAlertIcon,
+  PaintBrushIcon,
+} from "@heroicons/react/24/outline";
+import { useTheme } from "../contexts/ThemeContext";
 
 const SettingsPage = () => {
-  const { theme, toggleTheme } = useTheme(); // Dapatkan tema dan toggle dari context
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true); // Contoh state pengaturan
+  const { theme, toggleTheme } = useTheme();
+  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
   const handleToggleNotifications = () => {
     setNotificationsEnabled(!notificationsEnabled);
-    // Di sini nanti akan ada logika untuk menyimpan preferensi ke backend/localStorage
-    console.log('Notifikasi diubah menjadi:', !notificationsEnabled);
+
+    console.log("Notifikasi diubah menjadi:", !notificationsEnabled);
   };
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100">Pengaturan</h1>
+      <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 dark:text-gray-100">
+        Pengaturan
+      </h1>
 
       {/* Bagian Pengaturan Umum */}
       <div className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg">
@@ -28,7 +34,9 @@ const SettingsPage = () => {
           <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
             <div className="flex items-center">
               <PaintBrushIcon className="h-6 w-6 mr-3 text-gray-600 dark:text-gray-400" />
-              <span className="text-lg text-gray-800 dark:text-gray-200">Mode Tampilan</span>
+              <span className="text-lg text-gray-800 dark:text-gray-200">
+                Mode Tampilan
+              </span>
             </div>
             <button
               onClick={toggleTheme}
@@ -39,7 +47,7 @@ const SettingsPage = () => {
                          transition-colors duration-200 flex items-center space-x-2"
               aria-label="Toggle dark mode"
             >
-              {theme === 'light' ? (
+              {theme === "light" ? (
                 <>
                   <MoonIcon className="h-5 w-5" />
                   <span>Dark</span>
@@ -57,7 +65,9 @@ const SettingsPage = () => {
           <div className="flex items-center justify-between py-2 border-b border-gray-200 dark:border-gray-700 last:border-b-0">
             <div className="flex items-center">
               <BellAlertIcon className="h-6 w-6 mr-3 text-gray-600 dark:text-gray-400" />
-              <span className="text-lg text-gray-800 dark:text-gray-200">Aktifkan Notifikasi</span>
+              <span className="text-lg text-gray-800 dark:text-gray-200">
+                Aktifkan Notifikasi
+              </span>
             </div>
             <label className="relative inline-flex items-center cursor-pointer">
               <input
@@ -73,7 +83,8 @@ const SettingsPage = () => {
 
           {/* Tambahkan pengaturan lain di sini */}
           <div className="py-2 text-gray-600 dark:text-gray-400">
-            Pengaturan lain seperti zona waktu, format mata uang, dll. akan ditambahkan di sini.
+            Pengaturan lain seperti zona waktu, format mata uang, dll. akan
+            ditambahkan di sini.
           </div>
         </div>
       </div>

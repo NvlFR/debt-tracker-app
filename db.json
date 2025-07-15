@@ -15,10 +15,11 @@
       "isVerified": true
     }
   ],
-  "debts": [
+  "transactions": [
     {
       "id": "3",
       "userId": 2,
+      "type": "debt",
       "personName": "Charlie",
       "amount": 1000000,
       "transactionDate": "2025-07-05",
@@ -32,23 +33,9 @@
       "disbursedBy": null
     },
     {
-      "id": "ed8c",
-      "personName": "b",
-      "amount": 100000,
-      "transactionDate": "2025-07-15",
-      "dueDate": "2025-07-18",
-      "description": "",
-      "status": "pending",
-      "category": "Pribadi",
-      "paymentDate": "",
-      "proofUrl": "",
-      "userId": "1"
-    }
-  ],
-  "receivables": [
-    {
-      "id": "3",
+      "id": "4",
       "userId": 2,
+      "type": "receivable",
       "personName": "Frank",
       "amount": 700000,
       "transactionDate": "2025-07-12",
@@ -62,22 +49,9 @@
       "receivedBy": null
     },
     {
-      "id": "1068",
-      "personName": "c",
-      "amount": 99999,
-      "transactionDate": "2025-07-15",
-      "dueDate": "",
-      "description": "",
-      "status": "pending",
-      "category": "Pribadi",
-      "paymentDate": "",
-      "proofUrl": "",
-      "userId": "1"
-    },
-    {
-      "id": "146a",
+      "id": "2029",
       "personName": "a",
-      "amount": 100000,
+      "amount": 10000,
       "transactionDate": "2025-07-15",
       "dueDate": "",
       "description": "",
@@ -85,7 +59,8 @@
       "category": "Pribadi",
       "paymentDate": "",
       "proofUrl": "",
-      "userId": "1"
+      "userId": "1",
+      "type": "receivable"
     }
   ]
 }

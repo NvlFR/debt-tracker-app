@@ -1,8 +1,8 @@
 // src/layouts/DashboardLayout.jsx
-import React, { useState } from 'react';
-import { Link, Outlet } from 'react-router-dom';
-import { useTheme } from '../contexts/ThemeContext';
-import { useAuth } from '../contexts/AuthContext'; // Import useAuth
+import React, { useState } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
 
 import {
   HomeIcon,
@@ -15,143 +15,174 @@ import {
   SunIcon,
   MoonIcon,
   Bars3Icon,
-  XMarkIcon
-} from '@heroicons/react/24/outline'; // Ganti ke outline untuk beberapa ikon
+  XMarkIcon,
+} from "@heroicons/react/24/outline";
 
 const DashboardLayout = () => {
   const { theme, toggleTheme } = useTheme();
-  const { logout, user } = useAuth(); // Ambil fungsi logout dan user dari AuthContext
+  const { logout, user } = useAuth();
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const location = useLocation();
 
   const navLinks = [
-    { name: 'Dashboard', icon: HomeIcon, path: '/dashboard' },
-    { name: 'Utang', icon: ArrowDownCircleIcon, path: '/dashboard/debts' },
-    { name: 'Piutang', icon: ArrowUpCircleIcon, path: '/dashboard/receivables' },
-    { name: 'Laporan', icon: ChartBarIcon, path: '/dashboard/reports' },
+    { name: "Dashboard", icon: HomeIcon, path: "/dashboard" },
+    {
+      name: "Transaction",
+      icon: ArrowDownCircleIcon,
+      path: "/dashboard/debts",
+    },
+
+    { name: "Laporan", icon: ChartBarIcon, path: "/dashboard/reports" },
   ];
 
   const bottomNavLinks = [
-    { name: 'Profil', icon: UserCircleIcon, path: '/dashboard/profile' },
-    { name: 'Pengaturan', icon: Cog6ToothIcon, path: '/dashboard/settings' },
+    { name: "Profil", icon: UserCircleIcon, path: "/dashboard/profile" },
+    { name: "Pengaturan", icon: Cog6ToothIcon, path: "/dashboard/settings" },
   ];
 
-  // Fungsi logout yang sebenarnya
   const handleLogout = () => {
-    logout(); // Panggil fungsi logout dari context
+    logout();
   };
 
-  return (
-    <div className="flex h-screen bg-background-light dark:bg-gray-900 text-text-light dark:text-text-dark transition-colors duration-300">
+  const closeSidebar = () => {
+    setIsSidebarOpen(false);
+  };
 
-      {/* Mobile Sidebar Toggle Button (Burger Menu) */}
+  const isActivePath = (path) => location.pathname === path;
+
+  return (
+    <div className="flex h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+      {isSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black bg-opacity-50 z-30 md:hidden"
+          onClick={closeSidebar}
+        />
+      )}
+
       <button
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        className="md:hidden absolute top-4 left-4 p-2 rounded-md
-                   bg-gray-200 dark:bg-gray-700
-                   text-gray-800 dark:text-gray-200
-                   hover:bg-gray-300 dark:hover:bg-gray-600
-                   z-50 transition-colors duration-200"
+        className="md:hidden fixed top-4 left-4 p-2 rounded-lg
+                   bg-white dark:bg-gray-800 shadow-lg
+                   text-gray-700 dark:text-gray-200
+                   hover:bg-gray-100 dark:hover:bg-gray-700
+                   z-50 transition-all duration-200"
       >
         {isSidebarOpen ? (
-          <XMarkIcon className="h-6 w-6" />
+          <XMarkIcon className="h-5 w-5" />
         ) : (
-          <Bars3Icon className="h-6 w-6" />
+          <Bars3Icon className="h-5 w-5" />
         )}
       </button>
 
-      {/* Sidebar */}
-      <aside className={`fixed inset-y-0 left-0 transform
-                        ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-                        md:relative md:translate-x-0
-                        w-64 bg-white dark:bg-gray-800 shadow-lg md:shadow-none
-                        p-6 flex flex-col z-40 transition-transform duration-300 ease-in-out`}>
-        <div className="flex items-center justify-between mb-8">
-          <Link to="/dashboard" className="text-2xl font-bold text-primary-light dark:text-primary-dark">
+      <aside
+        className={`fixed inset-y-0 left-0 transform
+                    ${isSidebarOpen ? "translate-x-0" : "-translate-x-full"}
+                    md:relative md:translate-x-0
+                    w-72 bg-white dark:bg-gray-800 
+                    border-r border-gray-200 dark:border-gray-700
+                    flex flex-col z-40 transition-transform duration-300 ease-in-out`}
+      >
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 dark:border-gray-700">
+          <Link
+            to="/dashboard"
+            className="text-xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 transition-colors"
+          >
             DebtTracker
           </Link>
           <button
             onClick={toggleTheme}
-            className="p-2 rounded-full hidden md:block // Sembunyikan di mobile
-                       bg-gray-200 dark:bg-gray-700
-                       text-gray-800 dark:text-gray-200
-                       hover:bg-gray-300 dark:hover:bg-gray-600
+            className="p-2 rounded-lg hidden md:block
+                       bg-gray-100 dark:bg-gray-700
+                       text-gray-600 dark:text-gray-300
+                       hover:bg-gray-200 dark:hover:bg-gray-600
                        transition-colors duration-200"
             aria-label="Toggle dark mode"
           >
-            {theme === 'light' ? (
-              <MoonIcon className="h-6 w-6" />
+            {theme === "light" ? (
+              <MoonIcon className="h-5 w-5" />
             ) : (
-              <SunIcon className="h-6 w-6" />
+              <SunIcon className="h-5 w-5" />
             )}
           </button>
         </div>
 
-        {/* User Info di Sidebar */}
         {user && (
-          <div className="mb-6 flex items-center p-3 rounded-lg bg-gray-100 dark:bg-gray-700">
-            <UserCircleIcon className="h-8 w-8 text-primary-light dark:text-primary-dark mr-3" />
-            <div>
-              <p className="font-semibold text-gray-900 dark:text-gray-100">{user.name || 'Pengguna'}</p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">{user.email}</p>
+          <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center">
+                <UserCircleIcon className="h-6 w-6 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-semibold text-gray-900 dark:text-gray-100 truncate">
+                  {user.name || "Pengguna"}
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-400 truncate">
+                  {user.email}
+                </p>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Navigation Links */}
-        <nav className="flex-grow">
-          <ul>
-            {navLinks.map((link) => (
-              <li key={link.name} className="mb-2">
-                <Link
-                  to={link.path}
-                  className="flex items-center p-3 rounded-lg text-lg font-medium
-                             text-gray-700 dark:text-gray-300 hover:bg-primary-light hover:text-white
-                             dark:hover:bg-primary-dark transition-colors duration-200"
-                  onClick={() => setIsSidebarOpen(false)}
-                >
-                  <link.icon className="h-6 w-6 mr-3" />
-                  {link.name}
-                </Link>
-              </li>
-            ))}
-          </ul>
+        <nav className="flex-1 px-4 py-6 space-y-2">
+          {navLinks.map((link) => {
+            const isActive = isActivePath(link.path);
+            return (
+              <Link
+                key={link.name}
+                to={link.path}
+                className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200
+                  ${
+                    isActive
+                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-r-2 border-blue-600"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                onClick={closeSidebar}
+              >
+                <link.icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                {link.name}
+              </Link>
+            );
+          })}
         </nav>
 
-        {/* Bottom Navigation / User Options */}
-        <nav className="mt-auto pt-6 border-t border-gray-200 dark:border-gray-700">
-          <ul>
-            {bottomNavLinks.map((link) => (
-              <li key={link.name} className="mb-2">
-                <Link
-                  to={link.path}
-                  className="flex items-center p-3 rounded-lg text-lg font-medium
-                             text-gray-700 dark:text-gray-300 hover:bg-primary-light hover:text-white
-                             dark:hover:bg-primary-dark transition-colors duration-200"
-                  onClick={() => setIsSidebarOpen(false)}
-                >
-                  <link.icon className="h-6 w-6 mr-3" />
-                  {link.name}
-                </Link>
-              </li>
-            ))}
-            <li className="mt-4">
-              <button
-                onClick={handleLogout}
-                className="flex items-center w-full p-3 rounded-lg text-lg font-medium
-                           text-red-500 hover:bg-red-100 dark:hover:bg-red-900 dark:text-red-400
-                           transition-colors duration-200"
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+          {bottomNavLinks.map((link) => {
+            const isActive = isActivePath(link.path);
+            return (
+              <Link
+                key={link.name}
+                to={link.path}
+                className={`flex items-center px-3 py-2.5 rounded-lg text-sm font-medium transition-colors duration-200
+                  ${
+                    isActive
+                      ? "bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300"
+                      : "text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  }`}
+                onClick={closeSidebar}
               >
-                <ArrowLeftOnRectangleIcon className="h-6 w-6 mr-3" />
-                Logout
-              </button>
-            </li>
-          </ul>
-        </nav>
+                <link.icon className="h-5 w-5 mr-3 flex-shrink-0" />
+                {link.name}
+              </Link>
+            );
+          })}
+
+          <button
+            onClick={handleLogout}
+            className="flex items-center w-full px-3 py-2.5 rounded-lg text-sm font-medium
+              text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20
+              transition-colors duration-200"
+          >
+            <ArrowLeftOnRectangleIcon className="h-5 w-5 mr-3 flex-shrink-0" />
+            Logout
+          </button>
+        </div>
       </aside>
 
-      {/* Main Content Area */}
-      <main className="flex-1 overflow-y-auto p-6 md:p-8">
-        <Outlet />
+      <main className="flex-1 overflow-y-auto">
+        <div className="p-6 md:p-8 max-w-7xl mx-auto">
+          <Outlet />
+        </div>
       </main>
     </div>
   );
