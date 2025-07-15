@@ -1,12 +1,30 @@
-# React + Vite
+# 💸 DebtTrackerApp
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Aplikasi web modern untuk mencatat, memantau, dan mengelola **utang & piutang pribadi maupun bisnis** dengan mudah, cepat, dan aman. Cocok untuk keperluan pribadi, keluarga, atau tim kecil.
 
-Currently, two official plugins are available:
+![Screenshot Dashboard](./screenshots/dashboard-preview.png)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+---
 
-## Expanding the ESLint configuration
+## 🚀 Fitur Utama
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- ✅ **Form Transaksi Dinamis**: Catat utang atau piutang dalam satu form gabungan.
+- 📊 **Dashboard Interaktif**: Tampilkan ringkasan saldo, total utang/piutang, dan status terkini.
+- 🧠 **Perhitungan Otomatis**: Saldo bersih dihitung otomatis berdasarkan seluruh transaksi.
+- ⏳ **Status Transaksi**: Tandai utang/piutang sebagai `Belum Lunas` atau `Lunas` lengkap dengan tanggal penyelesaian.
+- 🔎 **Filter & Laporan**: Pantau transaksi berdasarkan status atau kategori.
+- 🌗 **Mode Gelap**: UI yang nyaman digunakan siang dan malam.
+
+---
+
+## 🛠️ Teknologi yang Digunakan
+
+- **Vite + React.js** — Untuk performa frontend yang cepat dan modular.
+- **Tailwind CSS** — Styling modern dan konsisten.
+- **React Icons** — Ikon responsif dan elegan.
+- **Toastify** — Notifikasi interaktif.
+- **localStorage / JSON Server** — Penyimpanan data sementara atau simulasi backend.
+
+---
+
+## 📦 Struktur Folder
