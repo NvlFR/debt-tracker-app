@@ -73,13 +73,14 @@
 // export default AuthPage;
 
 
+// src/pages/AuthPage.jsx
 import React, { useState } from 'react';
+// import { useNavigate } from 'react-router-dom';
+// Pastikan path ini benar dan komponen ini ada dan memiliki logika autentikasi
+import LoginForm from '../components/auth/LoginForm';
+import RegisterForm from '../components/auth/RegisterForm';
 
-// Import komponen form yang sudah ada
-// import LoginForm from '../components/auth/LoginForm';
-// import RegisterForm from '../components/auth/RegisterForm';
-
-// SVG Icon Components
+// SVG Icon Components (Biarkan saja, tidak ada masalah di sini)
 const SunIcon = ({ size = 20, className = "" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
     <circle cx="12" cy="12" r="5"/>
@@ -141,206 +142,21 @@ const EyeOffIcon = ({ size = 20, className = "" }) => (
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [theme, setTheme] = useState('light');
+  // const navigate = useNavigate(); // useNavigate tidak digunakan secara langsung di sini lagi
 
   const toggleTheme = () => {
     setTheme(theme === 'light' ? 'dark' : 'light');
+    // Tambahkan atau hapus class 'dark' dari elemen html
+    document.documentElement.classList.toggle('dark', theme === 'light');
   };
 
-  // Komponen form sementara - ganti dengan komponen asli Anda
-  const LoginFormComponent = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <label className={`block text-sm font-medium ${
-          theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-        }`}>
-          Email
-        </label>
-        <div className="relative">
-          <MailIcon className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${
-            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-          }`} size={18} />
-          <input
-            type="email"
-            className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-all duration-300 focus:outline-none focus:ring-2 ${
-              theme === 'dark'
-                ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:ring-purple-500 focus:border-purple-500'
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500'
-            }`}
-            placeholder="nama@email.com"
-            required
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className={`block text-sm font-medium ${
-          theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-        }`}>
-          Password
-        </label>
-        <div className="relative">
-          <LockIcon className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${
-            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-          }`} size={18} />
-          <input
-            type="password"
-            className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-all duration-300 focus:outline-none focus:ring-2 ${
-              theme === 'dark'
-                ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:ring-purple-500 focus:border-purple-500'
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500'
-            }`}
-            placeholder="Masukkan password"
-            required
-          />
-        </div>
-      </div>
-
-      <div className="text-right">
-        <button
-          type="button"
-          className={`text-sm transition-colors duration-300 ${
-            theme === 'dark' 
-              ? 'text-purple-400 hover:text-purple-300' 
-              : 'text-blue-600 hover:text-blue-500'
-          }`}
-        >
-          Lupa password?
-        </button>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => {
-          // Tambahkan logika login di sini
-          console.log('Login clicked');
-          // navigate('/dashboard'); // uncomment jika menggunakan navigate
-        }}
-        className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-300 transform hover:scale-105 active:scale-95 ${
-          theme === 'dark'
-            ? 'bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600'
-            : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600'
-        } shadow-lg hover:shadow-xl`}
-      >
-        Masuk
-      </button>
-    </div>
-  );
-
-  const RegisterFormComponent = () => (
-    <div className="space-y-4">
-      <div className="space-y-2">
-        <label className={`block text-sm font-medium ${
-          theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-        }`}>
-          Nama Lengkap
-        </label>
-        <div className="relative">
-          <UserIcon className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${
-            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-          }`} size={18} />
-          <input
-            type="text"
-            className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-all duration-300 focus:outline-none focus:ring-2 ${
-              theme === 'dark'
-                ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:ring-purple-500 focus:border-purple-500'
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500'
-            }`}
-            placeholder="Masukkan nama lengkap"
-            required
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className={`block text-sm font-medium ${
-          theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-        }`}>
-          Email
-        </label>
-        <div className="relative">
-          <MailIcon className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${
-            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-          }`} size={18} />
-          <input
-            type="email"
-            className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-all duration-300 focus:outline-none focus:ring-2 ${
-              theme === 'dark'
-                ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:ring-purple-500 focus:border-purple-500'
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500'
-            }`}
-            placeholder="nama@email.com"
-            required
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className={`block text-sm font-medium ${
-          theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-        }`}>
-          Password
-        </label>
-        <div className="relative">
-          <LockIcon className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${
-            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-          }`} size={18} />
-          <input
-            type="password"
-            className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-all duration-300 focus:outline-none focus:ring-2 ${
-              theme === 'dark'
-                ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:ring-purple-500 focus:border-purple-500'
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500'
-            }`}
-            placeholder="Masukkan password"
-            required
-          />
-        </div>
-      </div>
-
-      <div className="space-y-2">
-        <label className={`block text-sm font-medium ${
-          theme === 'dark' ? 'text-gray-300' : 'text-gray-700'
-        }`}>
-          Konfirmasi Password
-        </label>
-        <div className="relative">
-          <LockIcon className={`absolute left-3 top-1/2 transform -translate-y-1/2 ${
-            theme === 'dark' ? 'text-gray-400' : 'text-gray-500'
-          }`} size={18} />
-          <input
-            type="password"
-            className={`w-full pl-10 pr-4 py-3 rounded-lg border transition-all duration-300 focus:outline-none focus:ring-2 ${
-              theme === 'dark'
-                ? 'bg-gray-700/50 border-gray-600 text-white placeholder-gray-400 focus:ring-purple-500 focus:border-purple-500'
-                : 'bg-white border-gray-300 text-gray-900 placeholder-gray-500 focus:ring-blue-500 focus:border-blue-500'
-            }`}
-            placeholder="Konfirmasi password"
-            required
-          />
-        </div>
-      </div>
-
-      <button
-        type="button"
-        onClick={() => {
-          // Tambahkan logika register di sini
-          console.log('Register clicked');
-        }}
-        className={`w-full py-3 px-4 rounded-lg font-medium text-white transition-all duration-300 transform hover:scale-105 active:scale-95 ${
-          theme === 'dark'
-            ? 'bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600'
-            : 'bg-gradient-to-r from-blue-500 to-purple-500 hover:from-blue-600 hover:to-purple-600'
-        } shadow-lg hover:shadow-xl`}
-      >
-        Daftar
-      </button>
-    </div>
-  );
+  // HAPUS DEFINISI KOMPONEN LoginForm DAN RegisterForm DI SINI!
+  // Karena Anda sudah mengimpornya dari '../components/auth/'
 
   return (
     <div className={`min-h-screen transition-all duration-500 ${
-      theme === 'dark' 
-        ? 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900' 
+      theme === 'dark'
+        ? 'bg-gradient-to-br from-gray-900 via-purple-900 to-gray-900'
         : 'bg-gradient-to-br from-blue-50 via-white to-purple-50'
     }`}>
       {/* Background decoration */}
@@ -357,8 +173,8 @@ const AuthPage = () => {
       <button
         onClick={toggleTheme}
         className={`fixed top-6 right-6 p-3 rounded-full backdrop-blur-sm border transition-all duration-300 hover:scale-110 z-50 ${
-          theme === 'dark' 
-            ? 'bg-white/10 border-white/20 text-white hover:bg-white/20' 
+          theme === 'dark'
+            ? 'bg-white/10 border-white/20 text-white hover:bg-white/20'
             : 'bg-white/80 border-gray-200 text-gray-700 hover:bg-white shadow-lg'
         }`}
       >
@@ -368,17 +184,17 @@ const AuthPage = () => {
       {/* Main Content */}
       <div className="relative min-h-screen flex items-center justify-center p-6">
         <div className={`w-full max-w-md backdrop-blur-sm rounded-2xl shadow-2xl border transition-all duration-300 ${
-          theme === 'dark' 
-            ? 'bg-gray-800/40 border-gray-700/50' 
+          theme === 'dark'
+            ? 'bg-gray-800/40 border-gray-700/50'
             : 'bg-white/80 border-white/50'
         }`}>
-          
+
           {/* Header */}
           <div className="p-8 pb-6">
             <div className="text-center mb-8">
               <div className={`inline-flex items-center justify-center w-16 h-16 rounded-full mb-4 ${
-                theme === 'dark' 
-                  ? 'bg-gradient-to-r from-purple-500 to-blue-500' 
+                theme === 'dark'
+                  ? 'bg-gradient-to-r from-purple-500 to-blue-500'
                   : 'bg-gradient-to-r from-blue-500 to-purple-500'
               }`}>
                 {isLogin ? <UserIcon className="text-white" size={24} /> : <UserPlusIcon className="text-white" size={24} />}
@@ -432,13 +248,11 @@ const AuthPage = () => {
 
           {/* Form Content */}
           <div className="px-8 pb-8">
-            {/* Gunakan komponen form yang sudah ada atau komponen sementara */}
+            {/* Gunakan komponen form yang sudah diimpor */}
             {isLogin ? (
-              // <LoginForm /> // Uncomment dan gunakan komponen asli Anda
-              <LoginFormComponent />
+              <LoginForm />
             ) : (
-              // <RegisterForm /> // Uncomment dan gunakan komponen asli Anda
-              <RegisterFormComponent />
+              <RegisterForm />
             )}
 
             {/* Additional Links */}
@@ -450,8 +264,8 @@ const AuthPage = () => {
                 <button
                   onClick={() => setIsLogin(!isLogin)}
                   className={`ml-1 font-medium transition-colors duration-300 ${
-                    theme === 'dark' 
-                      ? 'text-purple-400 hover:text-purple-300' 
+                    theme === 'dark'
+                      ? 'text-purple-400 hover:text-purple-300'
                       : 'text-blue-600 hover:text-blue-500'
                   }`}
                 >
