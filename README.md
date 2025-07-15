@@ -27,4 +27,8 @@ Aplikasi web modern untuk mencatat, memantau, dan mengelola **utang & piutang pr
 
 ---
 
-## 📦 Struktur Folder
+## 📈 Rencana Pengembangan
+
+- 🔐 _ Autentikasi multi-user_ \_
+- 📱 _ Versi mobile responsif_ \_
+- 📅 _ Notifikasi pengingat jatuh tempo_ \_
