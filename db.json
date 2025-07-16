@@ -18,14 +18,15 @@
   "transactions": [
     {
       "id": "3",
-      "userId": 2,
+      "userId": "2",
       "type": "debt",
-      "personName": "Charlie",
+      "partyId": "p_charlie",
       "amount": 1000000,
       "transactionDate": "2025-07-05",
       "dueDate": "2025-09-01",
       "description": "Modal usaha",
       "status": "pending",
+      "isPaid": false,
       "category": "bisnis",
       "proofUrl": null,
       "paymentDate": null,
@@ -33,34 +34,37 @@
       "disbursedBy": null
     },
     {
-      "id": "4",
-      "userId": 2,
+      "id": "2029",
+      "userId": "1",
       "type": "receivable",
-      "personName": "Frank",
-      "amount": 700000,
-      "transactionDate": "2025-07-12",
-      "dueDate": "2025-09-10",
-      "description": "Jasa desain",
-      "status": "pending",
-      "category": "bisnis",
-      "proofUrl": null,
-      "paymentDate": null,
-      "reminderDate": null,
-      "receivedBy": null
+      "partyId": "p_alpha",
+      "amount": 1000,
+      "date": "2025-07-15",
+      "dueDate": null,
+      "description": "",
+      "status": "paid",
+      "isPaid": false,
+      "category": "Pribadi",
+      "paymentDate": "2025-07-16",
+      "proofUrl": null
+    }
+  ],
+  "parties": [
+    {
+      "id": "p_charlie",
+      "name": "Charlie",
+      "phone": null,
+      "type": "debtor",
+      "createdAt": "2025-07-05T00:00:00Z",
+      "updatedAt": "2025-07-05T00:00:00Z"
     },
     {
-      "id": "2029",
-      "personName": "a",
-      "amount": 10000,
-      "transactionDate": "2025-07-15",
-      "dueDate": "",
-      "description": "",
-      "status": "pending",
-      "category": "Pribadi",
-      "paymentDate": "",
-      "proofUrl": "",
-      "userId": "1",
-      "type": "receivable"
+      "id": "80d3",
+      "name": "d",
+      "phone": null,
+      "type": "both",
+      "createdAt": "2025-07-16T06:21:47.661Z",
+      "updatedAt": "2025-07-16T06:21:47.661Z"
     }
   ]
 }

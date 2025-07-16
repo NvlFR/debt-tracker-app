@@ -92,7 +92,8 @@ const TransactionForm = ({ type, initialData = {}, onSubmit, onClose }) => {
     try {
       const dataToSubmit = {
         ...formData,
-        amount: Number(formData.amount),
+        amount: Math.round(Number(formData.amount)),
+        type, // ⬅️ TAMBAHKAN INI
       };
       if (isNaN(dataToSubmit.amount)) {
         toast.error("Jumlah yang dimasukkan tidak valid.");

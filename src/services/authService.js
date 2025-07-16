@@ -2,7 +2,6 @@
 import api from "./api";
 
 const authService = {
-  // Registrasi pengguna
   register: async (name, email, password) => {
     try {
       const response = await api.post("/users", {
@@ -92,12 +91,13 @@ const authService = {
     }
   },
 
-  // ==============================
-  // CRUD Transaksi Gabungan
-  // ==============================
-  getTransactions: async (userId) => {
+  getTransactions: async (userId, typeFilter = null) => {
     try {
-      const response = await api.get(`/transactions?userId=${userId}`);
+      let url = `/transactions?userId=${userId}&_expand=party`;
+      if (typeFilter) {
+        url += `&type=${typeFilter}`;
+      }
+      const response = await api.get(url);
       return response.data;
     } catch (error) {
       console.error("Error fetching transactions:", error);
@@ -107,6 +107,7 @@ const authService = {
 
   addTransaction: async (data) => {
     try {
+      console.log("Data yang dikirim ke server:", data);
       const response = await api.post("/transactions", data);
       return response.data;
     } catch (error) {
@@ -133,6 +134,36 @@ const authService = {
       console.error("Error deleting transaction:", error);
       throw new Error("Gagal menghapus transaksi.");
     }
+  },
+  getDebts: async (userId) => {
+    return authService.getTransactions(userId, "debt");
+  },
+
+  getReceivables: async (userId) => {
+    return authService.getTransactions(userId, "receivable");
+  },
+  addDebt: async (data) => {
+    return authService.addTransaction({ ...data, type: "debt" });
+  },
+
+  addReceivable: async (data) => {
+    return authService.addTransaction({ ...data, type: "receivable" });
+  },
+
+  updateDebt: async (id, data) => {
+    return authService.updateTransaction(id, { ...data, type: "debt" });
+  },
+
+  updateReceivable: async (id, data) => {
+    return authService.updateTransaction(id, { ...data, type: "receivable" });
+  },
+
+  deleteDebt: async (id) => {
+    return authService.deleteTransaction(id);
+  },
+
+  deleteReceivable: async (id) => {
+    return authService.deleteTransaction(id);
   },
 };
 

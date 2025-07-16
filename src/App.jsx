@@ -17,7 +17,7 @@ import AuthPage from "./pages/AuthPage";
 import VerifyEmail from "./pages/VerifyEmail";
 import DashboardPage from "./pages/DashboardPage";
 import TransactionPage from "./pages/TransactionPage.jsx";
-
+import PartiesPage from "./pages/PartiesPage";
 import ProfilePage from "./pages/ProfilePage";
 import SettingsPage from "./pages/SettingsPage";
 import NotFoundPage from "./pages/NotFoundPage";
@@ -57,9 +57,12 @@ function App() {
               }
             >
               <Route index element={<DashboardPage />} />
-              <Route path="debts" element={<TransactionPage type="debt" />} />
               <Route
-                path="receivables"
+                path="transactions/debt"
+                element={<TransactionPage type="debt" />}
+              />
+              <Route
+                path="transactions/receivable"
                 element={<TransactionPage type="receivable" />}
               />
               <Route
@@ -68,6 +71,7 @@ function App() {
               />
               <Route path="profile" element={<ProfilePage />} />
               <Route path="settings" element={<SettingsPage />} />
+              <Route path="parties" element={<PartiesPage />} />
             </Route>
 
             <Route path="*" element={<NotFoundPage />} />

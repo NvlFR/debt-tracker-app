@@ -1,31 +1,30 @@
-// src/components/common/Modal.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect } from "react";
 
-const Modal = ({ children, onClose }) => {
-  // Menangani penekanan tombol Escape untuk menutup modal
+const Modal = ({ isOpen, children, onClose }) => {
+  // Jangan render modal jika tidak dibuka
+  if (!isOpen) return null;
+
   useEffect(() => {
     const handleEscape = (event) => {
-      if (event.key === 'Escape') {
+      if (event.key === "Escape") {
         onClose();
       }
     };
 
-    window.addEventListener('keydown', handleEscape);
-
-    // Cleanup event listener saat komponen di-unmount
+    window.addEventListener("keydown", handleEscape);
     return () => {
-      window.removeEventListener('keydown', handleEscape);
+      window.removeEventListener("keydown", handleEscape);
     };
-  }, [onClose]); // Dependensi onClose agar useEffect re-run jika onClose berubah
+  }, [onClose]);
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-      onClick={onClose} // Menutup modal saat mengklik di luar konten
+      onClick={onClose}
     >
       <div
         className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-xl max-w-lg w-full m-4 relative"
-        onClick={(e) => e.stopPropagation()} // Mencegah klik di dalam modal menutup modal
+        onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
