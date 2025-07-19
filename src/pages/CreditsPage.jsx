@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Heading,
@@ -78,6 +78,7 @@ const CreditsPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newCredit, setNewCredit] = useState({
     amount: "",
     description: "",
@@ -89,7 +90,14 @@ const CreditsPage = () => {
   const [paymentAmount, setPaymentAmount] = useState("");
   const [payments, setPayments] = useState([]);
 
-  const fetchData = async () => {
+  // Menggunakan useCallback untuk memoize fungsi fetchData
+  const fetchData = useCallback(async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    setLoading(true);
+    setError(null);
     try {
       const [creditTransactions, contactData, categoryData] = await Promise.all(
         [
@@ -110,25 +118,31 @@ const CreditsPage = () => {
       setContacts(contactData);
       setCategories(categoryData);
     } catch (err) {
-      setError(err.message);
+      console.error("Failed to fetch data:", err);
+      setError("Gagal memuat data. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    fetchData();
   }, [user, navigate]);
 
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   const handleAddCredit = async () => {
+    if (!newCredit.amount || !newCredit.contactId || !newCredit.categoryId || !newCredit.dueDate) {
+      toast({
+        title: "Input tidak valid.",
+        description: "Semua kolom harus diisi.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      if (!newCredit.contactId || !newCredit.categoryId) {
-        return;
-      }
       const transactionData = {
         ...newCredit,
         amount: parseFloat(newCredit.amount),
@@ -148,48 +162,111 @@ const CreditsPage = () => {
         categoryId: "",
         dueDate: "",
       });
+      toast({
+        title: "Piutang baru berhasil ditambahkan.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (err) {
-      setError(err.message);
+      console.error("Failed to add credit:", err);
+      toast({
+        title: "Gagal menambah piutang.",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleEditClick = (transaction) => {
-    setSelectedTransaction(transaction);
+    setSelectedTransaction({
+      ...transaction,
+      // Memastikan format tanggal kompatibel dengan input type="date"
+      dueDate: transaction.dueDate.split('T')[0],
+      amount: transaction.amount.toString(),
+    });
     onEditOpen();
   };
 
   const handleUpdateTransaction = async () => {
+    if (!selectedTransaction.amount || !selectedTransaction.contactId || !selectedTransaction.categoryId || !selectedTransaction.dueDate) {
+      toast({
+        title: "Input tidak valid.",
+        description: "Semua kolom harus diisi.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    
+    setIsSubmitting(true);
     try {
-      await updateTransaction(selectedTransaction.id, selectedTransaction);
+      await updateTransaction(selectedTransaction.id, {
+        ...selectedTransaction,
+        amount: parseFloat(selectedTransaction.amount),
+      });
       fetchData();
       onEditClose();
       setSelectedTransaction(null);
+      toast({
+        title: "Piutang berhasil diperbarui.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (err) {
-      setError(err.message);
+      console.error("Failed to update transaction:", err);
+      toast({
+        title: "Gagal memperbarui piutang.",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteTransaction = async (transactionId) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus piutang ini?")) {
+      return;
+    }
     try {
       await deleteTransaction(transactionId);
       fetchData();
+      toast({
+        title: "Piutang berhasil dihapus.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (err) {
-      setError(err.message);
+      console.error("Failed to delete transaction:", err);
+      toast({
+        title: "Gagal menghapus piutang.",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
   const handleOpenPartialPayment = (transaction) => {
     setSelectedTransaction(transaction);
+    setPaymentAmount(""); // Reset nilai saat modal dibuka
     onPartialPaymentOpen();
   };
 
   const handlePartialPayment = async () => {
     const amount = parseFloat(paymentAmount);
-    if (
-      isNaN(amount) ||
-      amount <= 0 ||
-      amount > selectedTransaction.currentAmount
-    ) {
+    if (isNaN(amount) || amount <= 0 || amount > selectedTransaction.currentAmount) {
       toast({
         title: "Pembayaran tidak valid.",
         description: "Jumlah harus positif dan tidak melebihi sisa piutang.",
@@ -200,6 +277,7 @@ const CreditsPage = () => {
       return;
     }
 
+    setIsSubmitting(true);
     try {
       const newCurrentAmount = selectedTransaction.currentAmount - amount;
       const newStatus = newCurrentAmount <= 0 ? "paid" : "ongoing";
@@ -227,7 +305,7 @@ const CreditsPage = () => {
         isClosable: true,
       });
     } catch (err) {
-      setError(err.message);
+      console.error("Failed to save partial payment:", err);
       toast({
         title: "Gagal menyimpan pembayaran.",
         description: err.message,
@@ -235,19 +313,49 @@ const CreditsPage = () => {
         duration: 5000,
         isClosable: true,
       });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  // Fungsi baru untuk melihat detail
   const handleViewDetails = async (transaction) => {
+    setLoading(true);
+    onDetailOpen();
     try {
       const fetchedPayments = await fetchPaymentsByTransactionId(transaction.id);
       setSelectedTransaction(transaction);
       setPayments(fetchedPayments);
-      onDetailOpen();
     } catch (err) {
+      console.error("Failed to load details:", err);
       toast({
         title: "Gagal memuat detail.",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleMarkAsPaid = async (transaction) => {
+    if (!window.confirm("Apakah Anda yakin ingin menandai piutang ini sebagai lunas?")) {
+      return;
+    }
+    try {
+      await updateTransactionStatus(transaction.id, "paid");
+      fetchData();
+      toast({
+        title: "Status piutang berhasil diperbarui menjadi lunas.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
+    } catch (err) {
+      console.error("Failed to mark as paid:", err);
+      toast({
+        title: "Gagal memperbarui status.",
         description: err.message,
         status: "error",
         duration: 5000,
@@ -256,13 +364,19 @@ const CreditsPage = () => {
     }
   };
 
-  const handleMarkAsPaid = async (transaction) => {
-    try {
-      await updateTransactionStatus(transaction.id, "paid");
-      fetchData();
-    } catch (err) {
-      setError(err.message);
-    }
+  const totalCredits = credits
+    .filter((t) => t.status === "ongoing")
+    .reduce((sum, t) => sum + t.currentAmount, 0);
+
+  // Fungsi untuk format tanggal
+  const formatDate = (dateString) => {
+    if (!dateString) return "Tidak ada tanggal";
+    const date = new Date(dateString);
+    return date.toLocaleDateString('id-ID', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
   };
 
   if (loading) {
@@ -283,10 +397,6 @@ const CreditsPage = () => {
       </Center>
     );
   }
-
-  const totalCredits = credits
-    .filter((t) => t.status === "ongoing")
-    .reduce((sum, t) => sum + t.currentAmount, 0);
 
   return (
     <Box>
@@ -315,7 +425,7 @@ const CreditsPage = () => {
         </SimpleGrid>
         <Box p={5} shadow="md" borderWidth="1px" borderRadius="md">
           <Heading size="md" mb={4}>
-            Transaksi Terbaru
+            Daftar Transaksi Piutang
           </Heading>
           {credits.length === 0 ? (
             <Text>Tidak ada piutang yang tercatat.</Text>
@@ -342,15 +452,11 @@ const CreditsPage = () => {
                           }).format(credit.currentAmount)}
                         </Text>
                         <Text fontSize="sm">
-                          {credit.contact
-                            ? credit.contact.name
-                            : "Kontak tidak diketahui"}
+                          {credit.contact ? credit.contact.name : "Kontak tidak diketahui"}
                         </Text>
                         <Text fontSize="sm" color="gray.500">
                           Kategori:{" "}
-                          {credit.category
-                            ? credit.category.name
-                            : "Tidak ada kategori"}
+                          {credit.category ? credit.category.name : "Tidak ada kategori"}
                         </Text>
                       </Box>
                       <Spacer />
@@ -363,33 +469,31 @@ const CreditsPage = () => {
                           )}
                         </Flex>
                         <Flex>
-                          {credit.status === "ongoing" &&
-                            credit.currentAmount > 0 && (
-                              <>
-                                <Button
-                                  size="sm"
-                                  mr={2}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleOpenPartialPayment(credit);
-                                  }}
-                                >
-                                  Bayar
-                                </Button>
-                                {credit.currentAmount === credit.amount && (
-                                  <Button
-                                    size="sm"
-                                    colorScheme="green"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleMarkAsPaid(credit);
-                                    }}
-                                  >
-                                    Lunas
-                                  </Button>
-                                )}
-                              </>
-                            )}
+                          {credit.status === "ongoing" && credit.currentAmount > 0 && (
+                            <Button
+                              size="sm"
+                              mr={2}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenPartialPayment(credit);
+                              }}
+                            >
+                              Bayar
+                            </Button>
+                          )}
+                          {credit.status === "ongoing" && (
+                            <IconButton
+                              icon={<CheckCircleIcon />}
+                              size="sm"
+                              mr={2}
+                              colorScheme="green"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMarkAsPaid(credit);
+                              }}
+                              aria-label="Tandai sebagai Lunas"
+                            />
+                          )}
                           <IconButton
                             icon={<EditIcon />}
                             mr={2}
@@ -398,6 +502,7 @@ const CreditsPage = () => {
                               e.stopPropagation();
                               handleEditClick(credit);
                             }}
+                            aria-label="Edit Transaksi"
                           />
                           <IconButton
                             icon={<DeleteIcon />}
@@ -407,6 +512,7 @@ const CreditsPage = () => {
                               e.stopPropagation();
                               handleDeleteTransaction(credit.id);
                             }}
+                            aria-label="Hapus Transaksi"
                           />
                         </Flex>
                       </Box>
@@ -437,7 +543,7 @@ const CreditsPage = () => {
                   }
                 />
               </FormControl>
-              <FormControl isRequired>
+              <FormControl>
                 <FormLabel>Deskripsi</FormLabel>
                 <Input
                   value={newCredit.description}
@@ -491,10 +597,10 @@ const CreditsPage = () => {
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handleAddCredit}>
+            <Button colorScheme="teal" mr={3} onClick={handleAddCredit} isLoading={isSubmitting}>
               Simpan
             </Button>
-            <Button variant="ghost" onClick={onClose}>
+            <Button variant="ghost" onClick={onClose} isDisabled={isSubmitting}>
               Batal
             </Button>
           </ModalFooter>
@@ -518,12 +624,12 @@ const CreditsPage = () => {
                     onChange={(e) =>
                       setSelectedTransaction({
                         ...selectedTransaction,
-                        amount: parseFloat(e.target.value),
+                        amount: e.target.value,
                       })
                     }
                   />
                 </FormControl>
-                <FormControl isRequired>
+                <FormControl>
                   <FormLabel>Deskripsi</FormLabel>
                   <Input
                     value={selectedTransaction.description}
@@ -590,10 +696,10 @@ const CreditsPage = () => {
             )}
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handleUpdateTransaction}>
+            <Button colorScheme="teal" mr={3} onClick={handleUpdateTransaction} isLoading={isSubmitting}>
               Simpan Perubahan
             </Button>
-            <Button variant="ghost" onClick={onEditClose}>
+            <Button variant="ghost" onClick={onEditClose} isDisabled={isSubmitting}>
               Batal
             </Button>
           </ModalFooter>
@@ -631,10 +737,10 @@ const CreditsPage = () => {
             )}
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handlePartialPayment}>
+            <Button colorScheme="teal" mr={3} onClick={handlePartialPayment} isLoading={isSubmitting}>
               Simpan Pembayaran
             </Button>
-            <Button variant="ghost" onClick={onPartialPaymentClose}>
+            <Button variant="ghost" onClick={onPartialPaymentClose} isDisabled={isSubmitting}>
               Batal
             </Button>
           </ModalFooter>
@@ -679,29 +785,19 @@ const CreditsPage = () => {
                       selectedTransaction.status === "paid" ? "green" : "yellow"
                     }
                   >
-                    {selectedTransaction.status === "paid"
-                      ? "Lunas"
-                      : "Sedang Berjalan"}
+                    {selectedTransaction.status === "paid" ? "Lunas" : "Sedang Berjalan"}
                   </Badge>
                 </Text>
-                <Text>
-                  Deskripsi: {selectedTransaction.description}
-                </Text>
+                <Text>Deskripsi: {selectedTransaction.description}</Text>
                 <Text>
                   Pihak Terkait:{" "}
-                  {selectedTransaction.contact
-                    ? selectedTransaction.contact.name
-                    : "Tidak diketahui"}
+                  {selectedTransaction.contact ? selectedTransaction.contact.name : "Tidak diketahui"}
                 </Text>
                 <Text>
                   Kategori:{" "}
-                  {selectedTransaction.category
-                    ? selectedTransaction.category.name
-                    : "Tidak ada"}
+                  {selectedTransaction.category ? selectedTransaction.category.name : "Tidak ada"}
                 </Text>
-                <Text>
-                  Tanggal Jatuh Tempo: {selectedTransaction.dueDate}
-                </Text>
+                <Text>Tanggal Jatuh Tempo: {formatDate(selectedTransaction.dueDate)}</Text>
                 <Heading size="sm" mt={4}>
                   Riwayat Pembayaran
                 </Heading>
@@ -716,7 +812,6 @@ const CreditsPage = () => {
                         bg="gray.100"
                         borderRadius="md"
                       >
-                        {/* Perubahan di sini: Menggunakan Stack untuk memisahkan baris */}
                         <Stack spacing={0}>
                           <Text fontWeight="bold">
                             {new Intl.NumberFormat("id-ID", {
@@ -726,7 +821,7 @@ const CreditsPage = () => {
                             }).format(payment.amount)}
                           </Text>
                           <Text fontSize="sm" color="gray.500">
-                            {new Date(payment.createdAt).toLocaleDateString()}
+                            {formatDate(payment.createdAt)}
                           </Text>
                         </Stack>
                       </ListItem>
