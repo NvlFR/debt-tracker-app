@@ -1,70 +1,165 @@
 {
   "users": [
     {
-      "id": "1",
-      "name": "John Doe",
-      "email": "john@example.com",
-      "password": "12345678",
-      "isVerified": true
+      "id": "u1",
+      "name": "Budi Santoso",
+      "email": "budi.s@example.com",
+      "password": "hashed_password"
     },
     {
-      "id": "2",
-      "name": "Jane Smith",
-      "email": "jane@example.com",
-      "password": "password123",
-      "isVerified": true
+      "id": "a9d2",
+      "name": "tes",
+      "email": "cek@gmail.com",
+      "password": "123123"
     }
   ],
   "transactions": [
     {
-      "id": "3",
-      "userId": "2",
-      "type": "debt",
-      "partyId": "p_charlie",
-      "amount": 1000000,
-      "transactionDate": "2025-07-05",
-      "dueDate": "2025-09-01",
-      "description": "Modal usaha",
-      "status": "pending",
-      "isPaid": false,
-      "category": "bisnis",
-      "proofUrl": null,
-      "paymentDate": null,
-      "reminderDate": "2025-08-25",
-      "disbursedBy": null
+      "id": "t1",
+      "userId": "u1",
+      "contactId": "c1",
+      "categoryId": "cat1",
+      "type": "utang",
+      "description": "Pinjaman modal kerja",
+      "originalAmount": 5000000,
+      "currentAmount": 2000000,
+      "currency": "IDR",
+      "status": "partial_paid",
+      "isOverdue": false,
+      "createdAt": "2024-07-18T10:00:00Z",
+      "dueDate": "2024-08-18T23:59:59Z"
     },
     {
-      "id": "2029",
-      "userId": "1",
-      "type": "receivable",
-      "partyId": "p_alpha",
-      "amount": 1000,
-      "date": "2025-07-15",
-      "dueDate": null,
-      "description": "",
+      "id": "t2",
+      "userId": "u1",
+      "contactId": "c2",
+      "categoryId": "cat2",
+      "type": "piutang",
+      "description": "Penjualan laptop bekas",
+      "originalAmount": 3500000,
+      "currentAmount": 0,
+      "currency": "IDR",
       "status": "paid",
-      "isPaid": false,
-      "category": "Pribadi",
-      "paymentDate": "2025-07-16",
-      "proofUrl": null
+      "isOverdue": false,
+      "createdAt": "2024-07-15T12:30:00Z",
+      "dueDate": "2024-07-20T23:59:59Z"
+    },
+    {
+      "id": "0b68",
+      "amount": 10000,
+      "description": "tes",
+      "contactId": "a387",
+      "categoryId": "a4aa",
+      "dueDate": "2025-07-19",
+      "currentAmount": 10000,
+      "type": "piutang",
+      "status": "ongoing",
+      "userId": "a9d2",
+      "createdAt": "2025-07-19T03:53:10.194Z"
+    },
+    {
+      "id": "800f",
+      "amount": 100000,
+      "description": "tes123",
+      "contactId": "208c",
+      "categoryId": "571f",
+      "dueDate": "2025-07-26",
+      "currentAmount": 100000,
+      "type": "utang",
+      "status": "ongoing",
+      "userId": "a9d2",
+      "createdAt": "2025-07-19T03:58:37.592Z"
+    },
+    {
+      "id": "025c",
+      "amount": 1000,
+      "description": "a",
+      "contactId": "208c",
+      "categoryId": "571f",
+      "dueDate": "2025-07-31",
+      "currentAmount": 1000,
+      "type": "piutang",
+      "status": "ongoing",
+      "userId": "a9d2",
+      "createdAt": "2025-07-19T04:03:34.191Z"
     }
   ],
-  "parties": [
+  "payments": [
     {
-      "id": "p_charlie",
-      "name": "Charlie",
-      "phone": null,
-      "type": "debtor",
-      "createdAt": "2025-07-05T00:00:00Z",
-      "updatedAt": "2025-07-05T00:00:00Z"
+      "id": "p1",
+      "userId": "u1",
+      "transactionId": "t1",
+      "amount": 1000000,
+      "paymentDate": "2024-07-25T15:00:00Z",
+      "description": "Pembayaran tahap 1"
     },
     {
-      "id": "80d3",
-      "name": "d",
-      "phone": null,
-      "type": "both",
-      "createdAt": "2025-07-16T06:21:47.661Z",
-      "updatedAt": "2025-07-16T06:21:47.661Z"
+      "id": "p2",
+      "userId": "u1",
+      "transactionId": "t1",
+      "amount": 2000000,
+      "paymentDate": "2024-08-01T10:00:00Z",
+      "description": "Pembayaran tahap 2"
+    }
+  ],
+  "contacts": [
+    {
+      "id": "c1",
+      "userId": "u1",
+      "name": "Alex",
+      "email": "alex@example.com",
+      "phoneNumber": "081234567890"
+    },
+    {
+      "id": "c2",
+      "userId": "u1",
+      "name": "PT Maju Terus",
+      "email": "info@maju-terus.com",
+      "phoneNumber": "021987654321"
+    },
+    {
+      "id": "a387",
+      "name": "a",
+      "email": "a",
+      "phoneNumber": "1",
+      "userId": "a9d2"
+    },
+    {
+      "id": "208c",
+      "name": "noval",
+      "email": "noval@gmail.com",
+      "phoneNumber": "085",
+      "userId": "a9d2"
+    }
+  ],
+  "categories": [
+    {
+      "id": "cat1",
+      "userId": "u1",
+      "name": "Pinjaman Pribadi",
+      "type": "utang"
+    },
+    {
+      "id": "cat2",
+      "userId": "u1",
+      "name": "Jual Beli",
+      "type": "piutang"
+    },
+    {
+      "id": "cat3",
+      "userId": "u1",
+      "name": "Bisnis",
+      "type": "all"
+    },
+    {
+      "id": "a4aa",
+      "name": "tes",
+      "userId": "a9d2"
+    },
+    {
+      "id": "571f",
+      "name": "bisnis",
+      "userId": "a9d2"
     }
   ]
 }
