@@ -13,29 +13,14 @@ import {
   Flex,
   Spacer,
   useDisclosure,
-  Modal,
-  ModalOverlay,
-  ModalContent,
-  ModalHeader,
-  ModalFooter,
-  ModalBody,
-  ModalCloseButton,
-  FormControl,
-  FormLabel,
-  Input,
-  Stack,
   IconButton,
 } from "@chakra-ui/react";
 import { EditIcon, DeleteIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import {
-  fetchCategoriesByUser,
-  addCategory,
-  updateCategory,
-  deleteCategory,
-} from "../api/dataApi";
-import Navbar from "../components/layout/Navbar";
+import { fetchCategoriesByUser, deleteCategory } from "../api/dataApi";
+import AddCategoryModal from "../components/AddCategoryModal"; // Import modal yang sudah kita buat
+import EditCategoryModal from "../components/EditCategoryModal"; // Asumsikan Anda akan membuat modal ini
 
 const CategoriesPage = () => {
   const { user } = useAuth();
@@ -49,14 +34,15 @@ const CategoriesPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [newCategory, setNewCategory] = useState({ name: "" });
   const [selectedCategory, setSelectedCategory] = useState(null);
 
   const fetchData = async () => {
     try {
+      if (!user) return; // Tambahkan cek untuk menghindari error
       const categoryData = await fetchCategoriesByUser(user.id);
       setCategories(categoryData);
     } catch (err) {
+      console.error("Error fetching categories:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -71,35 +57,9 @@ const CategoriesPage = () => {
     fetchData();
   }, [user, navigate]);
 
-  const handleAddCategory = async () => {
-    try {
-      const categoryData = {
-        ...newCategory,
-        userId: user.id,
-      };
-      await addCategory(categoryData);
-      fetchData();
-      onClose();
-      setNewCategory({ name: "" });
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
   const handleEditClick = (category) => {
     setSelectedCategory(category);
     onEditOpen();
-  };
-
-  const handleUpdateCategory = async () => {
-    try {
-      await updateCategory(selectedCategory.id, selectedCategory);
-      fetchData();
-      onEditClose();
-      setSelectedCategory(null);
-    } catch (err) {
-      setError(err.message);
-    }
   };
 
   const handleDeleteCategory = async (categoryId) => {
@@ -107,6 +67,7 @@ const CategoriesPage = () => {
       await deleteCategory(categoryId);
       fetchData();
     } catch (err) {
+      console.error("Error deleting category:", err);
       setError(err.message);
     }
   };
@@ -132,7 +93,6 @@ const CategoriesPage = () => {
 
   return (
     <Box>
-      <Navbar />
       <Box p={8}>
         <Flex mb={6} alignItems="center">
           <Heading>Daftar Kategori</Heading>
@@ -175,6 +135,20 @@ const CategoriesPage = () => {
                           colorScheme="red"
                           onClick={() => handleDeleteCategory(category.id)}
                         />
+
+                        <AddCategoryModal
+                          isOpen={isOpen}
+                          onClose={onClose}
+                          onUpdateSuccess={fetchData}
+                        />
+
+                        {/* Modal Edit Kategori */}
+                        <EditCategoryModal
+                          isOpen={isEditOpen}
+                          onClose={onEditClose}
+                          category={selectedCategory}
+                          onUpdateSuccess={fetchData} // Fungsi untuk refresh data
+                        />
                       </Flex>
                     </Box>
                   </Flex>
@@ -185,70 +159,15 @@ const CategoriesPage = () => {
         </Box>
       </Box>
 
-      {/* Modal untuk Tambah Kategori */}
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Tambah Kategori Baru</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Stack spacing={4}>
-              <FormControl isRequired>
-                <FormLabel>Nama Kategori</FormLabel>
-                <Input
-                  value={newCategory.name}
-                  onChange={(e) =>
-                    setNewCategory({ ...newCategory, name: e.target.value })
-                  }
-                />
-              </FormControl>
-            </Stack>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handleAddCategory}>
-              Simpan
-            </Button>
-            <Button variant="ghost" onClick={onClose}>
-              Batal
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      {/* Gunakan modal yang sudah kita buat */}
+      <AddCategoryModal isOpen={isOpen} onClose={onClose} />
 
-      {/* Modal untuk Edit Kategori */}
-      <Modal isOpen={isEditOpen} onClose={onEditClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Edit Kategori</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            {selectedCategory && (
-              <Stack spacing={4}>
-                <FormControl isRequired>
-                  <FormLabel>Nama Kategori</FormLabel>
-                  <Input
-                    value={selectedCategory.name}
-                    onChange={(e) =>
-                      setSelectedCategory({
-                        ...selectedCategory,
-                        name: e.target.value,
-                      })
-                    }
-                  />
-                </FormControl>
-              </Stack>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handleUpdateCategory}>
-              Simpan Perubahan
-            </Button>
-            <Button variant="ghost" onClick={onEditClose}>
-              Batal
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      {/* Asumsikan Anda akan membuat modal edit juga */}
+      {/* <EditCategoryModal 
+        isOpen={isEditOpen} 
+        onClose={onEditClose} 
+        category={selectedCategory} 
+      /> */}
     </Box>
   );
 };

@@ -20,11 +20,7 @@ import {
 } from "@chakra-ui/react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import {
-  fetchContactById,
-  fetchTransactionsByContact,
-} from "../api/dataApi";
-import Navbar from "../components/layout/Navbar";
+import { fetchContactById, fetchTransactionsByContact } from "../api/dataApi";
 
 const ContactDetailPage = () => {
   const { user } = useAuth();
@@ -93,12 +89,8 @@ const ContactDetailPage = () => {
   }
 
   // Menghitung ringkasan transaksi
-  const debtTransactions = transactions.filter(
-    (t) => t.type === "utang"
-  );
-  const creditTransactions = transactions.filter(
-    (t) => t.type === "piutang"
-  );
+  const debtTransactions = transactions.filter((t) => t.type === "utang");
+  const creditTransactions = transactions.filter((t) => t.type === "piutang");
   const totalDebtCount = debtTransactions.length;
   const totalCreditCount = creditTransactions.length;
   const totalDebtNominal = debtTransactions.reduce(
@@ -112,7 +104,6 @@ const ContactDetailPage = () => {
 
   return (
     <Box>
-      <Navbar />
       <Box p={8}>
         <Flex mb={6} alignItems="center">
           <Heading>Detail Kontak</Heading>
@@ -186,30 +177,39 @@ const ContactDetailPage = () => {
                 >
                   <Flex alignItems="center">
                     <Stack spacing={0}>
-                      <Text fontWeight="bold" color={transaction.type === "utang" ? "red.500" : "green.500"}>
+                      <Text
+                        fontWeight="bold"
+                        color={
+                          transaction.type === "utang" ? "red.500" : "green.500"
+                        }
+                      >
                         {new Intl.NumberFormat("id-ID", {
                           style: "currency",
                           currency: "IDR",
                           minimumFractionDigits: 0,
                         }).format(transaction.amount)}
                       </Text>
-                      <Text fontSize="sm">
-                        {transaction.description}
-                      </Text>
+                      <Text fontSize="sm">{transaction.description}</Text>
                     </Stack>
                     <Spacer />
                     <Box textAlign="right">
                       <Badge
-                        colorScheme={transaction.type === "utang" ? "red" : "green"}
+                        colorScheme={
+                          transaction.type === "utang" ? "red" : "green"
+                        }
                         mb={1}
                       >
                         {transaction.type === "utang" ? "Utang" : "Piutang"}
                       </Badge>
                       <Badge
-                        colorScheme={transaction.status === "paid" ? "green" : "orange"}
+                        colorScheme={
+                          transaction.status === "paid" ? "green" : "orange"
+                        }
                         ml={2}
                       >
-                        {transaction.status === "paid" ? "Lunas" : "Sedang Berjalan"}
+                        {transaction.status === "paid"
+                          ? "Lunas"
+                          : "Sedang Berjalan"}
                       </Badge>
                       <Text fontSize="sm" color="gray.500" mt={1}>
                         {new Date(transaction.createdAt).toLocaleDateString()}

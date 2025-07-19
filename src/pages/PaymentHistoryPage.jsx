@@ -16,11 +16,7 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import {
-  fetchPaymentsByUser,
-  fetchTransactionsByUser,
-} from "../api/dataApi";
-import Navbar from "../components/layout/Navbar";
+import { fetchPaymentsByUser, fetchTransactionsByUser } from "../api/dataApi";
 
 const PaymentHistoryPage = () => {
   const { user } = useAuth();
@@ -83,7 +79,6 @@ const PaymentHistoryPage = () => {
 
   return (
     <Box>
-      <Navbar />
       <Box p={8}>
         <Heading mb={6}>Riwayat Pembayaran</Heading>
         {payments.length === 0 ? (
@@ -114,9 +109,7 @@ const PaymentHistoryPage = () => {
                   <Box textAlign="right">
                     <Badge
                       colorScheme={
-                        payment.transactionType === "piutang"
-                          ? "green"
-                          : "red"
+                        payment.transactionType === "piutang" ? "green" : "red"
                       }
                       mb={1}
                     >

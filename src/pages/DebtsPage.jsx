@@ -50,7 +50,6 @@ import {
   updateTransactionStatus,
   fetchPaymentsByTransactionId,
 } from "../api/dataApi";
-import Navbar from "../components/layout/Navbar";
 
 const DebtsPage = () => {
   const { user } = useAuth();
@@ -239,7 +238,9 @@ const DebtsPage = () => {
   // Fungsi baru untuk melihat detail
   const handleViewDetails = async (transaction) => {
     try {
-      const fetchedPayments = await fetchPaymentsByTransactionId(transaction.id);
+      const fetchedPayments = await fetchPaymentsByTransactionId(
+        transaction.id
+      );
       setSelectedTransaction(transaction);
       setPayments(fetchedPayments);
       onDetailOpen();
@@ -288,7 +289,6 @@ const DebtsPage = () => {
 
   return (
     <Box>
-      <Navbar />
       <Box p={8}>
         <Flex mb={6} alignItems="center">
           <Heading>Daftar Utang</Heading>
@@ -682,9 +682,7 @@ const DebtsPage = () => {
                       : "Sedang Berjalan"}
                   </Badge>
                 </Text>
-                <Text>
-                  Deskripsi: {selectedTransaction.description}
-                </Text>
+                <Text>Deskripsi: {selectedTransaction.description}</Text>
                 <Text>
                   Pihak Terkait:{" "}
                   {selectedTransaction.contact
@@ -697,9 +695,7 @@ const DebtsPage = () => {
                     ? selectedTransaction.category.name
                     : "Tidak ada"}
                 </Text>
-                <Text>
-                  Tanggal Jatuh Tempo: {selectedTransaction.dueDate}
-                </Text>
+                <Text>Tanggal Jatuh Tempo: {selectedTransaction.dueDate}</Text>
                 <Heading size="sm" mt={4}>
                   Riwayat Pembayaran
                 </Heading>

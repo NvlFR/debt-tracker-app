@@ -1,250 +1,201 @@
-const API_URL = "http://localhost:3001";
+// src/api/dataApi.js
+import { supabase } from "../config/supabaseClient";
 
 // --- USERS ---
 export const fetchUserByEmail = async (email) => {
-  const response = await fetch(`${API_URL}/users?email=${email}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch user data.");
-  }
-  const users = await response.json();
-  return users[0];
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("email", email)
+    .single();
+  if (error) throw error;
+  return data;
 };
 
 export const registerUser = async (userData) => {
-  const response = await fetch(`${API_URL}/users`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(userData),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to register user.");
-  }
-  return response.json();
+  const { data, error } = await supabase.from("users").insert([userData]);
+  if (error) throw error;
+  return data;
 };
 
-
 // --- TRANSACTIONS ---
-export const fetchTransactionsByType = async (userId, type) => {
-  const response = await fetch(
-    `${API_URL}/transactions?userId=${userId}&type=${type}`
-  );
-  if (!response.ok) {
-    throw new Error(`Failed to fetch ${type} transactions.`);
-  }
-  return response.json();
+export const fetchTransactionsByType = async (user_id, type) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*, contact:contacts(name), category:categories(name)")
+    .eq("user_id", user_id)
+    .eq("type", type);
+  if (error) throw error;
+  return data;
 };
 
 export const addTransaction = async (transactionData) => {
-  const response = await fetch(`${API_URL}/transactions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(transactionData),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to add transaction.");
-  }
-  return response.json();
+  const { data, error } = await supabase
+    .from("transactions")
+    .insert([transactionData]);
+  if (error) throw error;
+  return data;
 };
 
-export const updateTransaction = async (transactionId, updatedData) => {
-  const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(updatedData),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to update transaction.");
-  }
-  return response.json();
+export const updateTransaction = async (transaction_id, updatedData) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .update(updatedData)
+    .eq("id", transaction_id);
+  if (error) throw error;
+  return data;
 };
 
-export const deleteTransaction = async (transactionId) => {
-  const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) {
-    throw new Error("Failed to delete transaction.");
-  }
-  return response.json();
+export const deleteTransaction = async (transaction_id) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("id", transaction_id);
+  if (error) throw error;
+  return data;
 };
 
-export const updateTransactionStatus = async (transactionId, newStatus) => {
-  const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ status: newStatus }),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to update transaction status.");
-  }
-  return response.json();
+export const updateTransactionStatus = async (transaction_id, newStatus) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .update({ status: newStatus })
+    .eq("id", transaction_id);
+  if (error) throw error;
+  return data;
 };
 
-export const fetchTransactionsByUser = async (userId) => {
-  const response = await fetch(`${API_URL}/transactions?userId=${userId}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch user's transactions.");
-  }
-  return response.json();
+export const fetchTransactionsByUser = async (user_id) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*, contact:contacts(name), category:categories(name)")
+    .eq("user_id", user_id);
+  if (error) throw error;
+  return data;
 };
 
-// Fungsi baru untuk mengambil semua transaksi berdasarkan ID kontak
-export const fetchTransactionsByContact = async (userId, contactId) => {
-  const response = await fetch(
-    `${API_URL}/transactions?userId=${userId}&contactId=${contactId}`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch transactions by contact.");
-  }
-  return response.json();
+export const fetchTransactionsByContact = async (user_id, contact_id) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*, contact:contacts(name), category:categories(name)")
+    .eq("user_id", user_id)
+    .eq("contact_id", contact_id);
+  if (error) throw error;
+  return data;
 };
 
 // --- PAYMENTS ---
 export const addPayment = async (paymentData) => {
-  const response = await fetch(`${API_URL}/payments`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(paymentData),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to add payment.");
-  }
-  return response.json();
+  const { data, error } = await supabase.from("payments").insert([paymentData]);
+  if (error) throw error;
+  return data;
 };
 
-export const fetchPaymentsByTransactionId = async (transactionId) => {
-  const response = await fetch(
-    `${API_URL}/payments?transactionId=${transactionId}`
-  );
-  if (!response.ok) {
-    throw new Error("Failed to fetch payments for transaction.");
-  }
-  return response.json();
+export const fetchPaymentsByTransactionId = async (transaction_id) => {
+  const { data, error } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("transaction_id", transaction_id);
+  if (error) throw error;
+  return data;
 };
 
-export const fetchPaymentsByUser = async (userId) => {
-  const transactions = await fetchTransactionsByUser(userId);
+export const fetchPaymentsByUser = async (user_id) => {
+  // Supabase tidak mendukung join di sisi klien, jadi kita ambil transaksi dulu
+  const { data: transactions, error: transactionsError } = await supabase
+    .from("transactions")
+    .select("id")
+    .eq("user_id", user_id);
+  if (transactionsError) throw transactionsError;
+
   const transactionIds = transactions.map((t) => t.id);
 
-  const response = await fetch(`${API_URL}/payments`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch all payments.");
-  }
-  const allPayments = await response.json();
+  const { data: payments, error: paymentsError } = await supabase
+    .from("payments")
+    .select("*")
+    .in("transaction_id", transactionIds);
+  if (paymentsError) throw paymentsError;
 
-  return allPayments.filter((payment) =>
-    transactionIds.includes(payment.transactionId)
-  );
+  return payments;
 };
 
 // --- CONTACTS ---
-export const fetchContactsByUser = async (userId) => {
-  const response = await fetch(`${API_URL}/contacts?userId=${userId}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch contacts.");
-  }
-  return response.json();
+export const fetchContactsByUser = async (user_id) => {
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("*")
+    .eq("user_id", user_id);
+  if (error) throw error;
+  return data;
 };
 
-export const fetchContactById = async (contactId) => {
-  const response = await fetch(`${API_URL}/contacts/${contactId}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch contact by ID.");
-  }
-  return response.json();
+export const fetchContactById = async (contact_id) => {
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("*")
+    .eq("id", contact_id)
+    .single();
+  if (error) throw error;
+  return data;
 };
 
 export const addContact = async (contactData) => {
-  const response = await fetch(`${API_URL}/contacts`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(contactData),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to add contact.");
-  }
-  return response.json();
+  const { data, error } = await supabase.from("contacts").insert([contactData]);
+  if (error) throw error;
+  return data;
 };
 
-export const updateContact = async (contactId, updatedData) => {
-  const response = await fetch(`${API_URL}/contacts/${contactId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(updatedData),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to update contact.");
-  }
-  return response.json();
+export const updateContact = async (contact_id, updatedData) => {
+  const { data, error } = await supabase
+    .from("contacts")
+    .update(updatedData)
+    .eq("id", contact_id);
+  if (error) throw error;
+  return data;
 };
 
-export const deleteContact = async (contactId) => {
-  const response = await fetch(`${API_URL}/contacts/${contactId}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) {
-    throw new Error("Failed to delete contact.");
-  }
-  return response.json();
+export const deleteContact = async (contact_id) => {
+  const { data, error } = await supabase
+    .from("contacts")
+    .delete()
+    .eq("id", contact_id);
+  if (error) throw error;
+  return data;
 };
 
 // --- CATEGORIES ---
-export const fetchCategoriesByUser = async (userId) => {
-  const response = await fetch(`${API_URL}/categories?userId=${userId}`);
-  if (!response.ok) {
-    throw new Error("Failed to fetch categories.");
-  }
-  return response.json();
+export const fetchCategoriesByUser = async (user_id) => {
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("user_id", user_id);
+  if (error) throw error;
+  return data;
 };
 
 export const addCategory = async (categoryData) => {
-  const response = await fetch(`${API_URL}/categories`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(categoryData),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to add category.");
-  }
-  return response.json();
+  const { data, error } = await supabase
+    .from("categories")
+    .insert([categoryData]);
+  if (error) throw error;
+  return data;
 };
 
-export const updateCategory = async (categoryId, updatedData) => {
-  const response = await fetch(`${API_URL}/categories/${categoryId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(updatedData),
-  });
-  if (!response.ok) {
-    throw new Error("Failed to update category.");
-  }
-  return response.json();
+export const updateCategory = async (id, categoryData) => {
+  const { data, error } = await supabase
+    .from("categories")
+    .update(categoryData)
+    .eq("id", id)
+    .eq("user_id", categoryData.user_id); // Pastikan ini juga menggunakan user_id
+
+  if (error) throw error;
+  return data;
 };
 
-export const deleteCategory = async (categoryId) => {
-  const response = await fetch(`${API_URL}/categories/${categoryId}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) {
-    throw new Error("Failed to delete category.");
-  }
-  return response.json();
+export const deleteCategory = async (category_id) => {
+  const { data, error } = await supabase
+    .from("categories")
+    .delete()
+    .eq("id", category_id);
+  if (error) throw error;
+  return data;
 };

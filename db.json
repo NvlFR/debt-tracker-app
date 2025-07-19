@@ -131,6 +131,19 @@
         "name": "tes1234",
         "userId": "a9d2"
       }
+    },
+    {
+      "id": "1e5d",
+      "amount": 100000,
+      "description": "tes",
+      "contactId": "106f",
+      "categoryId": "c6b3",
+      "dueDate": "2025-07-19",
+      "currentAmount": 100000,
+      "type": "utang",
+      "status": "paid",
+      "userId": "a9d2",
+      "createdAt": "2025-07-19T11:03:45.319Z"
     }
   ],
   "payments": [

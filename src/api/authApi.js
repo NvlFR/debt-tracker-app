@@ -1,42 +1,61 @@
-const API_URL = "http://localhost:3001";
+// src/api/authApi.js
+import { supabase } from "../config/supabaseClient";
 
 export const loginUser = async (email, password) => {
-  const response = await fetch(`${API_URL}/users?email=${email}`);
-  const users = await response.json();
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: email,
+    password: password,
+  });
 
-  if (users.length > 0) {
-    const user = users[0];
+  if (error) {
+    return { success: false, message: error.message };
+  }
+
+  if (data.session && data.user) {
     return {
       success: true,
-      user: { id: user.id, name: user.name, email: user.email },
+      user: {
+        id: data.user.id,
+        name: data.user.user_metadata.name,
+        email: data.user.email,
+      },
     };
   }
 
-  return { success: false, message: "Email atau Password salah" };
+  return { success: false, message: "Email atau password salah." };
 };
 
 export const registerUser = async (name, email, password) => {
-  const checkEmail = await fetch(`${API_URL}/users?email=${email}`);
-  const existingUser = await checkEmail.json();
-  if (existingUser.length > 0) {
-    return { success: false, message: "Email sudah terdaftar." };
-  }
-
-  const response = await fetch(`${API_URL}/users`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  const { data, error } = await supabase.auth.signUp({
+    email: email,
+    password: password,
+    options: {
+      data: {
+        name: name,
+      },
     },
-    body: JSON.stringify({ name, email, password }),
   });
 
-  if (response.ok) {
-    const newUser = await response.json();
+  if (error) {
+    console.error("Supabase sign-up error:", error.message);
+    return { success: false, message: error.message };
+  }
+
+  if (data.user) {
     return {
       success: true,
-      user: { id: newUser.id, name: newUser.name, email: newUser.email },
+      user: {
+        id: data.user.id,
+        name: data.user.user_metadata.name,
+        email: data.user.email,
+      },
     };
-  } else {
-    return { success: false, message: "Terjadi kesalahan saat registrasi." };
+  }
+};
+
+export const logoutUser = async () => {
+  const { error } = await supabase.auth.signOut();
+  if (error) {
+    console.error("Error signing out:", error.message);
   }
 };
