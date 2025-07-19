@@ -31,6 +31,10 @@ import {
   Stack,
   IconButton,
   Tag,
+  useToast,
+  LinkBox,
+  LinkOverlay,
+  Badge,
 } from "@chakra-ui/react";
 import { EditIcon, DeleteIcon, CheckCircleIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
@@ -44,12 +48,14 @@ import {
   deleteTransaction,
   addPayment,
   updateTransactionStatus,
+  fetchPaymentsByTransactionId,
 } from "../api/dataApi";
 import Navbar from "../components/layout/Navbar";
 
 const DebtsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isEditOpen,
@@ -61,6 +67,12 @@ const DebtsPage = () => {
     onOpen: onPartialPaymentOpen,
     onClose: onPartialPaymentClose,
   } = useDisclosure();
+  const {
+    isOpen: isDetailOpen,
+    onOpen: onDetailOpen,
+    onClose: onDetailClose,
+  } = useDisclosure();
+
   const [debts, setDebts] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -75,6 +87,7 @@ const DebtsPage = () => {
   });
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState("");
+  const [payments, setPayments] = useState([]);
 
   const fetchData = async () => {
     try {
@@ -83,7 +96,15 @@ const DebtsPage = () => {
         fetchContactsByUser(user.id),
         fetchCategoriesByUser(user.id),
       ]);
-      setDebts(debtTransactions);
+
+      // Memperkaya data transaksi dengan nama kontak dan kategori
+      const enrichedDebts = debtTransactions.map((debt) => ({
+        ...debt,
+        contact: contactData.find((c) => c.id === debt.contactId),
+        category: categoryData.find((cat) => cat.id === debt.categoryId),
+      }));
+
+      setDebts(enrichedDebts);
       setContacts(contactData);
       setCategories(categoryData);
     } catch (err) {
@@ -167,11 +188,26 @@ const DebtsPage = () => {
       amount <= 0 ||
       amount > selectedTransaction.currentAmount
     ) {
-      alert("Jumlah pembayaran tidak valid.");
+      toast({
+        title: "Pembayaran tidak valid.",
+        description: "Jumlah harus positif dan tidak melebihi sisa utang.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
       return;
     }
+
     try {
-      // 1. Tambahkan pembayaran ke riwayat pembayaran
+      const newCurrentAmount = selectedTransaction.currentAmount - amount;
+      const newStatus = newCurrentAmount <= 0 ? "paid" : "ongoing";
+
+      await updateTransaction(selectedTransaction.id, {
+        ...selectedTransaction,
+        currentAmount: newCurrentAmount,
+        status: newStatus,
+      });
+
       const paymentData = {
         transactionId: selectedTransaction.id,
         amount: amount,
@@ -179,18 +215,42 @@ const DebtsPage = () => {
       };
       await addPayment(paymentData);
 
-      // 2. Perbarui jumlah sisa transaksi
-      const newCurrentAmount = selectedTransaction.currentAmount - amount;
-      await updateTransaction(selectedTransaction.id, {
-        ...selectedTransaction,
-        currentAmount: newCurrentAmount,
-      });
-
       fetchData();
       onPartialPaymentClose();
       setPaymentAmount("");
+      toast({
+        title: "Pembayaran berhasil disimpan.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (err) {
       setError(err.message);
+      toast({
+        title: "Gagal menyimpan pembayaran.",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    }
+  };
+
+  // Fungsi baru untuk melihat detail
+  const handleViewDetails = async (transaction) => {
+    try {
+      const fetchedPayments = await fetchPaymentsByTransactionId(transaction.id);
+      setSelectedTransaction(transaction);
+      setPayments(fetchedPayments);
+      onDetailOpen();
+    } catch (err) {
+      toast({
+        title: "Gagal memuat detail.",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
@@ -260,80 +320,97 @@ const DebtsPage = () => {
           ) : (
             <List spacing={3}>
               {debts.map((debt) => (
-                <ListItem
+                <LinkBox
+                  as={ListItem}
                   key={debt.id}
                   p={3}
                   borderWidth="1px"
                   borderRadius="md"
+                  _hover={{ bg: "gray.700" }}
+                  cursor="pointer"
                 >
-                  <Flex alignItems="center">
-                    <Box>
-                      <Text fontWeight="bold" color="red.500">
-                        {new Intl.NumberFormat("id-ID", {
-                          style: "currency",
-                          currency: "IDR",
-                          minimumFractionDigits: 0,
-                        }).format(debt.currentAmount)}
-                      </Text>
-                      <Text fontSize="sm">
-                        {debt.contact
-                          ? debt.contact.name
-                          : "Kontak tidak diketahui"}
-                      </Text>
-                      <Text fontSize="sm" color="gray.500">
-                        Kategori:{" "}
-                        {debt.category
-                          ? debt.category.name
-                          : "Tidak ada kategori"}
-                      </Text>
-                    </Box>
-                    <Spacer />
-                    <Box>
-                      <Flex mb={2} justifyContent="flex-end">
-                        {debt.status === "paid" ? (
-                          <Tag colorScheme="green">Lunas</Tag>
-                        ) : (
-                          <Tag colorScheme="yellow">Sedang Berjalan</Tag>
-                        )}
-                      </Flex>
-                      <Flex>
-                        {debt.status === "ongoing" &&
-                          debt.currentAmount > 0 && (
-                            <>
-                              <Button
-                                size="sm"
-                                mr={2}
-                                onClick={() => handleOpenPartialPayment(debt)}
-                              >
-                                Bayar
-                              </Button>
-                              {debt.currentAmount === debt.amount && (
+                  <LinkOverlay onClick={() => handleViewDetails(debt)}>
+                    <Flex alignItems="center">
+                      <Box>
+                        <Text fontWeight="bold" color="red.500">
+                          {new Intl.NumberFormat("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
+                            minimumFractionDigits: 0,
+                          }).format(debt.currentAmount)}
+                        </Text>
+                        <Text fontSize="sm">
+                          {debt.contact
+                            ? debt.contact.name
+                            : "Kontak tidak diketahui"}
+                        </Text>
+                        <Text fontSize="sm" color="gray.500">
+                          Kategori:{" "}
+                          {debt.category
+                            ? debt.category.name
+                            : "Tidak ada kategori"}
+                        </Text>
+                      </Box>
+                      <Spacer />
+                      <Box>
+                        <Flex mb={2} justifyContent="flex-end">
+                          {debt.status === "paid" ? (
+                            <Tag colorScheme="green">Lunas</Tag>
+                          ) : (
+                            <Tag colorScheme="red">Sedang Berjalan</Tag>
+                          )}
+                        </Flex>
+                        <Flex>
+                          {debt.status === "ongoing" &&
+                            debt.currentAmount > 0 && (
+                              <>
                                 <Button
                                   size="sm"
-                                  colorScheme="green"
-                                  onClick={() => handleMarkAsPaid(debt)}
+                                  mr={2}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleOpenPartialPayment(debt);
+                                  }}
                                 >
-                                  Lunas
+                                  Bayar
                                 </Button>
-                              )}
-                            </>
-                          )}
-                        <IconButton
-                          icon={<EditIcon />}
-                          mr={2}
-                          size="sm"
-                          onClick={() => handleEditClick(debt)}
-                        />
-                        <IconButton
-                          icon={<DeleteIcon />}
-                          size="sm"
-                          colorScheme="red"
-                          onClick={() => handleDeleteTransaction(debt.id)}
-                        />
-                      </Flex>
-                    </Box>
-                  </Flex>
-                </ListItem>
+                                {debt.currentAmount === debt.amount && (
+                                  <Button
+                                    size="sm"
+                                    colorScheme="green"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMarkAsPaid(debt);
+                                    }}
+                                  >
+                                    Lunas
+                                  </Button>
+                                )}
+                              </>
+                            )}
+                          <IconButton
+                            icon={<EditIcon />}
+                            mr={2}
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditClick(debt);
+                            }}
+                          />
+                          <IconButton
+                            icon={<DeleteIcon />}
+                            size="sm"
+                            colorScheme="red"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTransaction(debt.id);
+                            }}
+                          />
+                        </Flex>
+                      </Box>
+                    </Flex>
+                  </LinkOverlay>
+                </LinkBox>
               ))}
             </List>
           )}
@@ -557,6 +634,108 @@ const DebtsPage = () => {
             </Button>
             <Button variant="ghost" onClick={onPartialPaymentClose}>
               Batal
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Modal untuk Detail Transaksi */}
+      <Modal isOpen={isDetailOpen} onClose={onDetailClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Detail Transaksi</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {selectedTransaction && (
+              <Stack spacing={3}>
+                <Text>
+                  Jumlah Awal:{" "}
+                  {new Intl.NumberFormat("id-ID", {
+                    style: "currency",
+                    currency: "IDR",
+                    minimumFractionDigits: 0,
+                  }).format(selectedTransaction.amount)}
+                </Text>
+                <Text>
+                  Sisa Utang:{" "}
+                  <Badge
+                    colorScheme={
+                      selectedTransaction.status === "paid" ? "green" : "red"
+                    }
+                  >
+                    {new Intl.NumberFormat("id-ID", {
+                      style: "currency",
+                      currency: "IDR",
+                      minimumFractionDigits: 0,
+                    }).format(selectedTransaction.currentAmount)}
+                  </Badge>
+                </Text>
+                <Text>
+                  Status:{" "}
+                  <Badge
+                    colorScheme={
+                      selectedTransaction.status === "paid" ? "green" : "red"
+                    }
+                  >
+                    {selectedTransaction.status === "paid"
+                      ? "Lunas"
+                      : "Sedang Berjalan"}
+                  </Badge>
+                </Text>
+                <Text>
+                  Deskripsi: {selectedTransaction.description}
+                </Text>
+                <Text>
+                  Pihak Terkait:{" "}
+                  {selectedTransaction.contact
+                    ? selectedTransaction.contact.name
+                    : "Tidak diketahui"}
+                </Text>
+                <Text>
+                  Kategori:{" "}
+                  {selectedTransaction.category
+                    ? selectedTransaction.category.name
+                    : "Tidak ada"}
+                </Text>
+                <Text>
+                  Tanggal Jatuh Tempo: {selectedTransaction.dueDate}
+                </Text>
+                <Heading size="sm" mt={4}>
+                  Riwayat Pembayaran
+                </Heading>
+                {payments.length === 0 ? (
+                  <Text>Belum ada pembayaran.</Text>
+                ) : (
+                  <List spacing={2}>
+                    {payments.map((payment) => (
+                      <ListItem
+                        key={payment.id}
+                        p={2}
+                        bg="gray.100"
+                        borderRadius="md"
+                      >
+                        <Stack spacing={0}>
+                          <Text fontWeight="bold">
+                            {new Intl.NumberFormat("id-ID", {
+                              style: "currency",
+                              currency: "IDR",
+                              minimumFractionDigits: 0,
+                            }).format(payment.amount)}
+                          </Text>
+                          <Text fontSize="sm" color="gray.500">
+                            {new Date(payment.createdAt).toLocaleDateString()}
+                          </Text>
+                        </Stack>
+                      </ListItem>
+                    ))}
+                  </List>
+                )}
+              </Stack>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="teal" onClick={onDetailClose}>
+              Tutup
             </Button>
           </ModalFooter>
         </ModalContent>

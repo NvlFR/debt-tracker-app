@@ -8,7 +8,9 @@ import DebtsPage from "./pages/DebtsPage";
 import CreditsPage from "./pages/CreditsPage";
 import ContactsPage from "./pages/ContactsPage";
 import CategoriesPage from "./pages/CategoriesPage";
+import PaymentHistoryPage from "./pages/PaymentHistoryPage";
 import LandingPage from "./pages/LandingPage";
+import ContactDetailPage from "./pages/ContactDetailPage";
 
 const App = () => {
   return (
@@ -58,7 +60,25 @@ const App = () => {
               </ProtectedRoute>
             }
           />
-        </Routes>
+          {/* Bagian ini yang diperbaiki */}
+          <Route
+            path="/payment-history"
+            element={
+              <ProtectedRoute>
+                <PaymentHistoryPage />
+              </ProtectedRoute>
+            }
+          />
+                    <Route
+              path="/contacts/:contactId"
+              element={
+                <ProtectedRoute>
+                  <ContactDetailPage />
+                </ProtectedRoute>
+              }
+            />
+          </Routes>
+
       </AuthProvider>
     </Router>
   );

@@ -8,6 +8,10 @@ import {
   Center,
   Alert,
   AlertIcon,
+  SimpleGrid,
+  Stat,
+  StatLabel,
+  StatNumber,
   List,
   ListItem,
   Flex,
@@ -25,9 +29,11 @@ import {
   Input,
   Stack,
   IconButton,
+  LinkBox,
+  LinkOverlay,
 } from "@chakra-ui/react";
-import { EditIcon, DeleteIcon } from "@chakra-ui/icons";
-import { useNavigate } from "react-router-dom";
+import { AddIcon, EditIcon, DeleteIcon } from "@chakra-ui/icons";
+import { useNavigate, Link } from "react-router-dom"; // Import Link di sini
 import { useAuth } from "../context/AuthContext";
 import {
   fetchContactsByUser,
@@ -46,13 +52,14 @@ const ContactsPage = () => {
     onOpen: onEditOpen,
     onClose: onEditClose,
   } = useDisclosure();
+
   const [contacts, setContacts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [newContact, setNewContact] = useState({
     name: "",
     email: "",
-    phoneNumber: "",
+    phone: "",
   });
   const [selectedContact, setSelectedContact] = useState(null);
 
@@ -77,14 +84,10 @@ const ContactsPage = () => {
 
   const handleAddContact = async () => {
     try {
-      const contactData = {
-        ...newContact,
-        userId: user.id,
-      };
-      await addContact(contactData);
+      await addContact({ ...newContact, userId: user.id });
       fetchData();
       onClose();
-      setNewContact({ name: "", email: "", phoneNumber: "" });
+      setNewContact({ name: "", email: "", phone: "" });
     } catch (err) {
       setError(err.message);
     }
@@ -141,51 +144,53 @@ const ContactsPage = () => {
         <Flex mb={6} alignItems="center">
           <Heading>Daftar Pihak Terkait</Heading>
           <Spacer />
-          <Button colorScheme="teal" onClick={onOpen}>
+          <Button colorScheme="teal" onClick={onOpen} leftIcon={<AddIcon />}>
             Tambah Kontak Baru
           </Button>
         </Flex>
+
         <Box p={5} shadow="md" borderWidth="1px" borderRadius="md">
           <Heading size="md" mb={4}>
-            Kontak Anda
+            Daftar Kontak
           </Heading>
           {contacts.length === 0 ? (
-            <Text>Tidak ada kontak yang tercatat.</Text>
+            <Text>Tidak ada kontak yang terdaftar.</Text>
           ) : (
             <List spacing={3}>
               {contacts.map((contact) => (
-                <ListItem
-                  key={contact.id}
-                  p={3}
-                  borderWidth="1px"
-                  borderRadius="md"
-                >
+                <LinkBox as={ListItem} key={contact.id} p={3} borderWidth="1px" borderRadius="md" _hover={{ bg: "gray.700" }}>
                   <Flex alignItems="center">
                     <Box>
-                      <Text fontWeight="bold">{contact.name}</Text>
-                      <Text fontSize="sm" color="gray.500">
-                        {contact.email} - {contact.phoneNumber}
-                      </Text>
+                      {/* Perubahan di sini: Menggunakan "as={Link}" dan "to" */}
+                      <LinkOverlay as={Link} to={`/contacts/${contact.id}`}>
+                        <Text fontWeight="bold">{contact.name}</Text>
+                        <Text fontSize="sm" color="gray.500">{contact.email}</Text>
+                        <Text fontSize="sm" color="gray.500">{contact.phone}</Text>
+                      </LinkOverlay>
                     </Box>
                     <Spacer />
-                    <Box>
-                      <Flex>
-                        <IconButton
-                          icon={<EditIcon />}
-                          mr={2}
-                          size="sm"
-                          onClick={() => handleEditClick(contact)}
-                        />
-                        <IconButton
-                          icon={<DeleteIcon />}
-                          size="sm"
-                          colorScheme="red"
-                          onClick={() => handleDeleteContact(contact.id)}
-                        />
-                      </Flex>
-                    </Box>
+                    <Flex>
+                      <IconButton
+                        icon={<EditIcon />}
+                        mr={2}
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleEditClick(contact);
+                        }}
+                      />
+                      <IconButton
+                        icon={<DeleteIcon />}
+                        size="sm"
+                        colorScheme="red"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteContact(contact.id);
+                        }}
+                      />
+                    </Flex>
                   </Flex>
-                </ListItem>
+                </LinkBox>
               ))}
             </List>
           )}
@@ -209,7 +214,7 @@ const ContactsPage = () => {
                   }
                 />
               </FormControl>
-              <FormControl>
+              <FormControl isRequired>
                 <FormLabel>Email</FormLabel>
                 <Input
                   type="email"
@@ -220,15 +225,12 @@ const ContactsPage = () => {
                 />
               </FormControl>
               <FormControl>
-                <FormLabel>Nomor Telepon</FormLabel>
+                <FormLabel>Nomor HP</FormLabel>
                 <Input
                   type="tel"
-                  value={newContact.phoneNumber}
+                  value={newContact.phone}
                   onChange={(e) =>
-                    setNewContact({
-                      ...newContact,
-                      phoneNumber: e.target.value,
-                    })
+                    setNewContact({ ...newContact, phone: e.target.value })
                   }
                 />
               </FormControl>
@@ -266,7 +268,7 @@ const ContactsPage = () => {
                     }
                   />
                 </FormControl>
-                <FormControl>
+                <FormControl isRequired>
                   <FormLabel>Email</FormLabel>
                   <Input
                     type="email"
@@ -280,14 +282,14 @@ const ContactsPage = () => {
                   />
                 </FormControl>
                 <FormControl>
-                  <FormLabel>Nomor Telepon</FormLabel>
+                  <FormLabel>Nomor HP</FormLabel>
                   <Input
                     type="tel"
-                    value={selectedContact.phoneNumber}
+                    value={selectedContact.phone}
                     onChange={(e) =>
                       setSelectedContact({
                         ...selectedContact,
-                        phoneNumber: e.target.value,
+                        phone: e.target.value,
                       })
                     }
                   />

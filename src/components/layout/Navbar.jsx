@@ -52,6 +52,9 @@ const Navbar = () => {
               <Button as={RouterLink} to="/categories" variant="ghost" mx={2}>
                 Kategori
               </Button>
+              <Button as={RouterLink} to="/payment-history" variant="ghost" mx={2}>
+                Riwayat Pembayaran
+              </Button>
               <Button onClick={handleLogout} variant="ghost" mx={2}>
                 Logout
               </Button>
@@ -108,6 +111,14 @@ const Navbar = () => {
                     bg="teal.500"
                   >
                     Kategori
+                  </MenuItem>
+                  <MenuItem
+                    as={RouterLink}
+                    to="/payment-history"
+                    onClick={onClose}
+                    bg="teal.500"
+                  >
+                    Riwayat Pembayaran
                   </MenuItem>
                   <MenuItem onClick={handleLogout} bg="teal.500">
                     Logout
