@@ -45,32 +45,6 @@
       "dueDate": "2024-07-20T23:59:59Z"
     },
     {
-      "id": "0b68",
-      "amount": 100000,
-      "description": "tes",
-      "contactId": "a387",
-      "categoryId": "a4aa",
-      "dueDate": "2025-07-19",
-      "currentAmount": 10000,
-      "type": "piutang",
-      "status": "paid",
-      "userId": "a9d2",
-      "createdAt": "2025-07-19T03:53:10.194Z"
-    },
-    {
-      "id": "025c",
-      "amount": 1000,
-      "description": "a",
-      "contactId": "208c",
-      "categoryId": "571f",
-      "dueDate": "2025-07-31",
-      "currentAmount": 1000,
-      "type": "piutang",
-      "status": "paid",
-      "userId": "a9d2",
-      "createdAt": "2025-07-19T04:03:34.191Z"
-    },
-    {
       "id": "2aff",
       "amount": 1000000,
       "description": "tes",
@@ -84,30 +58,29 @@
       "createdAt": "2025-07-19T05:01:37.860Z"
     },
     {
-      "id": "afcb",
-      "amount": 11111,
-      "description": "q",
-      "contactId": "208c",
-      "categoryId": "571f",
-      "dueDate": "2025-07-19",
-      "currentAmount": 11111,
+      "id": "761c",
+      "amount": 10000000,
+      "description": "tes",
+      "contactId": "106f",
+      "categoryId": "c6b3",
+      "dueDate": "2025-07-30",
+      "currentAmount": 0,
       "type": "utang",
-      "status": "ongoing",
+      "status": "paid",
       "userId": "a9d2",
-      "createdAt": "2025-07-19T05:30:53.479Z"
-    },
-    {
-      "id": "fb28",
-      "amount": 10,
-      "description": "j",
-      "contactId": "208c",
-      "categoryId": "571f",
-      "dueDate": "2025-07-19",
-      "currentAmount": 10,
-      "type": "piutang",
-      "status": "ongoing",
-      "userId": "a9d2",
-      "createdAt": "2025-07-19T05:38:03.018Z"
+      "createdAt": "2025-07-19T07:37:26.920Z",
+      "contact": {
+        "id": "106f",
+        "name": "tes123",
+        "email": "tes123@tes.com",
+        "phone": "08123947146",
+        "userId": "a9d2"
+      },
+      "category": {
+        "id": "c6b3",
+        "name": "tes1234",
+        "userId": "a9d2"
+      }
     }
   ],
   "payments": [
@@ -138,6 +111,54 @@
       "transactionId": null,
       "amount": 90000,
       "createdAt": "2025-07-19T04:48:42.267Z"
+    },
+    {
+      "id": "98f9",
+      "transactionId": null,
+      "amount": 1000,
+      "createdAt": "2025-07-19T06:02:25.153Z"
+    },
+    {
+      "id": "9384",
+      "transactionId": null,
+      "amount": 5000,
+      "createdAt": "2025-07-19T06:06:56.160Z"
+    },
+    {
+      "id": "8cf4",
+      "transactionId": null,
+      "amount": 50000,
+      "createdAt": "2025-07-19T06:07:35.167Z"
+    },
+    {
+      "id": "c568",
+      "transactionId": null,
+      "amount": 50000,
+      "createdAt": "2025-07-19T06:07:44.358Z"
+    },
+    {
+      "id": "a142",
+      "transactionId": null,
+      "amount": 100000,
+      "createdAt": "2025-07-19T06:08:29.914Z"
+    },
+    {
+      "id": "e473",
+      "transactionId": null,
+      "amount": 100000,
+      "createdAt": "2025-07-19T06:10:56.227Z"
+    },
+    {
+      "id": "9ea6",
+      "transactionId": null,
+      "amount": 10000,
+      "createdAt": "2025-07-19T06:12:58.146Z"
+    },
+    {
+      "id": "e2fc",
+      "transactionId": "761c",
+      "amount": 5000000,
+      "createdAt": "2025-07-19T07:40:22.420Z"
     }
   ],
   "contacts": [
@@ -156,17 +177,10 @@
       "phoneNumber": "021987654321"
     },
     {
-      "id": "a387",
-      "name": "a",
-      "email": "a",
-      "phoneNumber": "1",
-      "userId": "a9d2"
-    },
-    {
-      "id": "208c",
-      "name": "noval",
-      "email": "noval@gmail.com",
-      "phoneNumber": "085",
+      "id": "106f",
+      "name": "tes123",
+      "email": "tes123@tes.com",
+      "phone": "08123947146",
       "userId": "a9d2"
     }
   ],
@@ -190,13 +204,8 @@
       "type": "all"
     },
     {
-      "id": "a4aa",
-      "name": "tes",
-      "userId": "a9d2"
-    },
-    {
-      "id": "571f",
-      "name": "bisnis",
+      "id": "c6b3",
+      "name": "tes1234",
       "userId": "a9d2"
     }
   ]
