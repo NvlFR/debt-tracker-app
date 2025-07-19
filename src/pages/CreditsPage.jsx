@@ -30,8 +30,9 @@ import {
   Select,
   Stack,
   IconButton,
+  Tag,
 } from "@chakra-ui/react";
-import { EditIcon, DeleteIcon } from "@chakra-ui/icons";
+import { EditIcon, DeleteIcon, CheckCircleIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
@@ -41,6 +42,8 @@ import {
   fetchCategoriesByUser,
   updateTransaction,
   deleteTransaction,
+  addPayment,
+  updateTransactionStatus,
 } from "../api/dataApi";
 import Navbar from "../components/layout/Navbar";
 
@@ -52,6 +55,11 @@ const CreditsPage = () => {
     isOpen: isEditOpen,
     onOpen: onEditOpen,
     onClose: onEditClose,
+  } = useDisclosure();
+  const {
+    isOpen: isPartialPaymentOpen,
+    onOpen: onPartialPaymentOpen,
+    onClose: onPartialPaymentClose,
   } = useDisclosure();
   const [credits, setCredits] = useState([]);
   const [contacts, setContacts] = useState([]);
@@ -66,6 +74,7 @@ const CreditsPage = () => {
     dueDate: "",
   });
   const [selectedTransaction, setSelectedTransaction] = useState(null);
+  const [paymentAmount, setPaymentAmount] = useState("");
 
   const fetchData = async () => {
     try {
@@ -148,6 +157,54 @@ const CreditsPage = () => {
     }
   };
 
+  const handleOpenPartialPayment = (transaction) => {
+    setSelectedTransaction(transaction);
+    onPartialPaymentOpen();
+  };
+
+  const handlePartialPayment = async () => {
+    const amount = parseFloat(paymentAmount);
+    if (
+      isNaN(amount) ||
+      amount <= 0 ||
+      amount > selectedTransaction.currentAmount
+    ) {
+      alert("Jumlah pembayaran tidak valid.");
+      return;
+    }
+    try {
+      // 1. Tambahkan pembayaran ke riwayat pembayaran
+      const paymentData = {
+        transactionId: selectedTransaction.id,
+        amount: amount,
+        createdAt: new Date().toISOString(),
+      };
+      await addPayment(paymentData);
+
+      // 2. Perbarui jumlah sisa transaksi
+      const newCurrentAmount = selectedTransaction.currentAmount - amount;
+      await updateTransaction(selectedTransaction.id, {
+        ...selectedTransaction,
+        currentAmount: newCurrentAmount,
+      });
+
+      fetchData();
+      onPartialPaymentClose();
+      setPaymentAmount("");
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleMarkAsPaid = async (transaction) => {
+    try {
+      await updateTransactionStatus(transaction.id, "paid");
+      fetchData();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   if (loading) {
     return (
       <Center h="100vh">
@@ -167,7 +224,9 @@ const CreditsPage = () => {
     );
   }
 
-  const totalCredits = credits.reduce((sum, t) => sum + t.currentAmount, 0);
+  const totalCredits = credits
+    .filter((t) => t.status === "ongoing")
+    .reduce((sum, t) => sum + t.currentAmount, 0);
 
   return (
     <Box>
@@ -232,10 +291,35 @@ const CreditsPage = () => {
                     </Box>
                     <Spacer />
                     <Box>
-                      <Text fontSize="sm" color="gray.500" mb={2}>
-                        Jatuh Tempo: {credit.dueDate}
-                      </Text>
+                      <Flex mb={2} justifyContent="flex-end">
+                        {credit.status === "paid" ? (
+                          <Tag colorScheme="green">Lunas</Tag>
+                        ) : (
+                          <Tag colorScheme="yellow">Sedang Berjalan</Tag>
+                        )}
+                      </Flex>
                       <Flex>
+                        {credit.status === "ongoing" &&
+                          credit.currentAmount > 0 && (
+                            <>
+                              <Button
+                                size="sm"
+                                mr={2}
+                                onClick={() => handleOpenPartialPayment(credit)}
+                              >
+                                Bayar
+                              </Button>
+                              {credit.currentAmount === credit.amount && (
+                                <Button
+                                  size="sm"
+                                  colorScheme="green"
+                                  onClick={() => handleMarkAsPaid(credit)}
+                                >
+                                  Lunas
+                                </Button>
+                              )}
+                            </>
+                          )}
                         <IconButton
                           icon={<EditIcon />}
                           mr={2}
@@ -357,7 +441,7 @@ const CreditsPage = () => {
                     onChange={(e) =>
                       setSelectedTransaction({
                         ...selectedTransaction,
-                        amount: e.target.value,
+                        amount: parseFloat(e.target.value),
                       })
                     }
                   />
@@ -433,6 +517,47 @@ const CreditsPage = () => {
               Simpan Perubahan
             </Button>
             <Button variant="ghost" onClick={onEditClose}>
+              Batal
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Modal untuk Pembayaran Sebagian */}
+      <Modal isOpen={isPartialPaymentOpen} onClose={onPartialPaymentClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Bayar Sebagian</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {selectedTransaction && (
+              <Stack spacing={4}>
+                <Text>
+                  Sisa Piutang:
+                  <Text as="span" fontWeight="bold" ml={1}>
+                    {new Intl.NumberFormat("id-ID", {
+                      style: "currency",
+                      currency: "IDR",
+                      minimumFractionDigits: 0,
+                    }).format(selectedTransaction.currentAmount)}
+                  </Text>
+                </Text>
+                <FormControl isRequired>
+                  <FormLabel>Jumlah Pembayaran</FormLabel>
+                  <Input
+                    type="number"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                  />
+                </FormControl>
+              </Stack>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="teal" mr={3} onClick={handlePartialPayment}>
+              Simpan Pembayaran
+            </Button>
+            <Button variant="ghost" onClick={onPartialPaymentClose}>
               Batal
             </Button>
           </ModalFooter>

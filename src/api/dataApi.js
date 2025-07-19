@@ -152,3 +152,31 @@ export const deleteCategory = async (id) => {
   }
   return response.json();
 };
+
+export const addPayment = async (paymentData) => {
+  const response = await fetch(`${API_URL}/payments`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(paymentData),
+  });
+  if (!response.ok) {
+    throw new Error("Gagal menambahkan pembayaran.");
+  }
+  return response.json();
+};
+
+export const updateTransactionStatus = async (transactionId, status) => {
+  const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ status }),
+  });
+  if (!response.ok) {
+    throw new Error("Gagal memperbarui status transaksi.");
+  }
+  return response.json();
+};

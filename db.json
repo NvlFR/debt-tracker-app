@@ -46,29 +46,16 @@
     },
     {
       "id": "0b68",
-      "amount": 10000,
+      "amount": 100000,
       "description": "tes",
       "contactId": "a387",
       "categoryId": "a4aa",
       "dueDate": "2025-07-19",
       "currentAmount": 10000,
       "type": "piutang",
-      "status": "ongoing",
+      "status": "paid",
       "userId": "a9d2",
       "createdAt": "2025-07-19T03:53:10.194Z"
-    },
-    {
-      "id": "800f",
-      "amount": 100000,
-      "description": "tes123",
-      "contactId": "208c",
-      "categoryId": "571f",
-      "dueDate": "2025-07-26",
-      "currentAmount": 100000,
-      "type": "utang",
-      "status": "ongoing",
-      "userId": "a9d2",
-      "createdAt": "2025-07-19T03:58:37.592Z"
     },
     {
       "id": "025c",
@@ -79,9 +66,35 @@
       "dueDate": "2025-07-31",
       "currentAmount": 1000,
       "type": "piutang",
-      "status": "ongoing",
+      "status": "paid",
       "userId": "a9d2",
       "createdAt": "2025-07-19T04:03:34.191Z"
+    },
+    {
+      "id": "9e6f",
+      "amount": 1000000,
+      "description": "tes",
+      "contactId": "208c",
+      "categoryId": "571f",
+      "dueDate": "2025-08-09",
+      "currentAmount": 1000000,
+      "type": "utang",
+      "status": "paid",
+      "userId": "a9d2",
+      "createdAt": "2025-07-19T04:49:28.274Z"
+    },
+    {
+      "id": "2aff",
+      "amount": 1000000,
+      "description": "tes",
+      "contactId": "c2",
+      "categoryId": "cat1",
+      "dueDate": "2025-08-06",
+      "currentAmount": 1000000,
+      "type": "utang",
+      "status": "paid",
+      "userId": "u1",
+      "createdAt": "2025-07-19T05:01:37.860Z"
     }
   ],
   "payments": [
@@ -100,6 +113,18 @@
       "amount": 2000000,
       "paymentDate": "2024-08-01T10:00:00Z",
       "description": "Pembayaran tahap 2"
+    },
+    {
+      "id": "b3f7",
+      "transactionId": null,
+      "amount": 10000,
+      "createdAt": "2025-07-19T04:48:20.705Z"
+    },
+    {
+      "id": "a90a",
+      "transactionId": null,
+      "amount": 90000,
+      "createdAt": "2025-07-19T04:48:42.267Z"
     }
   ],
   "contacts": [
