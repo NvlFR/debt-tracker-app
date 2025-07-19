@@ -71,19 +71,6 @@
       "createdAt": "2025-07-19T04:03:34.191Z"
     },
     {
-      "id": "9e6f",
-      "amount": 1000000,
-      "description": "tes",
-      "contactId": "208c",
-      "categoryId": "571f",
-      "dueDate": "2025-08-09",
-      "currentAmount": 1000000,
-      "type": "utang",
-      "status": "paid",
-      "userId": "a9d2",
-      "createdAt": "2025-07-19T04:49:28.274Z"
-    },
-    {
       "id": "2aff",
       "amount": 1000000,
       "description": "tes",
@@ -95,6 +82,32 @@
       "status": "paid",
       "userId": "u1",
       "createdAt": "2025-07-19T05:01:37.860Z"
+    },
+    {
+      "id": "afcb",
+      "amount": 11111,
+      "description": "q",
+      "contactId": "208c",
+      "categoryId": "571f",
+      "dueDate": "2025-07-19",
+      "currentAmount": 11111,
+      "type": "utang",
+      "status": "ongoing",
+      "userId": "a9d2",
+      "createdAt": "2025-07-19T05:30:53.479Z"
+    },
+    {
+      "id": "fb28",
+      "amount": 10,
+      "description": "j",
+      "contactId": "208c",
+      "categoryId": "571f",
+      "dueDate": "2025-07-19",
+      "currentAmount": 10,
+      "type": "piutang",
+      "status": "ongoing",
+      "userId": "a9d2",
+      "createdAt": "2025-07-19T05:38:03.018Z"
     }
   ],
   "payments": [
