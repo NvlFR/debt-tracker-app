@@ -1,7 +1,5 @@
-// src/api/dataApi.js
 import { supabase } from "../config/supabaseClient";
 
-// --- USERS ---
 export const fetchUserByEmail = async (email) => {
   const { data, error } = await supabase
     .from("users")
@@ -18,7 +16,6 @@ export const registerUser = async (userData) => {
   return data;
 };
 
-// --- TRANSACTIONS ---
 export const fetchTransactionsByType = async (user_id, type) => {
   const { data, error } = await supabase
     .from("transactions")
@@ -36,7 +33,6 @@ export const addTransaction = async (transactionData) => {
       user_id: transactionData.user_id,
     },
   ]);
-
   if (error) throw error;
   return data;
 };
@@ -47,12 +43,10 @@ export const updateTransaction = async (id, transactionData) => {
     .update(transactionData)
     .eq("id", id)
     .eq("user_id", transactionData.user_id);
-
   if (error) throw error;
   return data;
 };
 
-// **PERBAIKAN:** Menambahkan filter user_id untuk keamanan
 export const deleteTransaction = async (transaction_id, user_id) => {
   const { data, error } = await supabase
     .from("transactions")
@@ -63,7 +57,6 @@ export const deleteTransaction = async (transaction_id, user_id) => {
   return data;
 };
 
-// **PERBAIKAN:** Menambahkan filter user_id untuk keamanan
 export const updateTransactionStatus = async (
   transaction_id,
   newStatus,
@@ -97,16 +90,13 @@ export const fetchTransactionsByContact = async (user_id, contact_id) => {
   return data;
 };
 
-// --- PAYMENTS ---
 export const addPayment = async (paymentData) => {
   const { data, error } = await supabase.from("payments").insert([paymentData]);
   if (error) throw error;
   return data;
 };
 
-// **PERBAIKAN:** Fungsi ini harus memvalidasi kepemilikan transaksi oleh user
 export const fetchPaymentsByTransactionId = async (transaction_id, user_id) => {
-  // Pertama, pastikan transaksi ini milik user yang sedang login
   const { data: transaction, error: transactionError } = await supabase
     .from("transactions")
     .select("id")
@@ -118,7 +108,6 @@ export const fetchPaymentsByTransactionId = async (transaction_id, user_id) => {
     throw new Error("Transaction not found or not owned by the user.");
   }
 
-  // Jika validasi berhasil, ambil pembayaran yang terkait
   const { data, error } = await supabase
     .from("payments")
     .select("*")
@@ -128,7 +117,6 @@ export const fetchPaymentsByTransactionId = async (transaction_id, user_id) => {
   return data;
 };
 
-// **PERBAIKAN:** Menggunakan satu query JOIN yang efisien dan aman
 export const fetchPaymentsByUser = async (userId) => {
   const { data, error } = await supabase
     .from("payments")
@@ -149,7 +137,6 @@ export const fetchPaymentsByUser = async (userId) => {
 
   if (error) throw error;
 
-  // Memformat data agar lebih mudah digunakan di komponen
   const payments = data.map((payment) => ({
     id: payment.id,
     amount: payment.amount,
@@ -162,7 +149,6 @@ export const fetchPaymentsByUser = async (userId) => {
   return payments;
 };
 
-// --- CONTACTS ---
 export const fetchContactsByUser = async (user_id) => {
   const { data, error } = await supabase
     .from("contacts")
@@ -189,7 +175,6 @@ export const addContact = async (contactData) => {
   return data;
 };
 
-// **PERBAIKAN:** Menambahkan filter user_id untuk keamanan
 export const updateContact = async (contact_id, updatedData, user_id) => {
   const { data, error } = await supabase
     .from("contacts")
@@ -200,7 +185,6 @@ export const updateContact = async (contact_id, updatedData, user_id) => {
   return data;
 };
 
-// **PERBAIKAN:** Menambahkan filter user_id untuk keamanan
 export const deleteContact = async (contact_id, user_id) => {
   const { data, error } = await supabase
     .from("contacts")
@@ -211,7 +195,6 @@ export const deleteContact = async (contact_id, user_id) => {
   return data;
 };
 
-// --- CATEGORIES ---
 export const fetchCategoriesByUser = async (user_id) => {
   const { data, error } = await supabase
     .from("categories")
@@ -229,19 +212,16 @@ export const addCategory = async (categoryData) => {
   return data;
 };
 
-// **PERBAIKAN:** Menambahkan filter user_id untuk keamanan
 export const updateCategory = async (id, categoryData, user_id) => {
   const { data, error } = await supabase
     .from("categories")
     .update(categoryData)
     .eq("id", id)
     .eq("user_id", user_id);
-
   if (error) throw error;
   return data;
 };
 
-// **PERBAIKAN:** Menambahkan filter user_id untuk keamanan
 export const deleteCategory = async (category_id, user_id) => {
   const { data, error } = await supabase
     .from("categories")

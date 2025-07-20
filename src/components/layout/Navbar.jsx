@@ -7,7 +7,7 @@ import {
   useColorMode,
   IconButton,
   Link as ChakraLink,
-  HStack, // Tambahkan HStack di sini
+  HStack,
   Spacer,
   Text,
 } from "@chakra-ui/react";
@@ -22,7 +22,8 @@ import {
   History,
   LogOut,
 } from "lucide-react";
-import { Link as ReactRouterLink, useNavigate } from "react-router-dom";
+// Import NavLink dari react-router-dom
+import { NavLink as ReactRouterNavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
 // Definisikan item navigasi dengan ikon yang sesuai
@@ -42,16 +43,16 @@ const Navbar = ({ isOpen }) => {
 
   const handleLogout = () => {
     logout();
+    logout();
     navigate("/login");
   };
 
   return (
     <VStack spacing={4} align="stretch" flex="1">
-      {/* Judul Aplikasi - Tampilkan hanya jika sidebar terbuka */}
       {isOpen && (
         <Heading as="h1" size="md" mb={4}>
           <ChakraLink
-            as={ReactRouterLink}
+            as={ReactRouterNavLink} // Gunakan NavLink
             to="/dashboard"
             _hover={{ textDecoration: "none" }}
           >
@@ -60,25 +61,32 @@ const Navbar = ({ isOpen }) => {
         </Heading>
       )}
 
-      {/* Navigasi Utama - VStack ini selalu ditampilkan */}
       <VStack spacing={2} align="stretch">
         {user ? (
           <>
             {navItems.map((item) => (
-              <ChakraLink
-                key={item.path}
-                as={ReactRouterLink}
-                to={item.path}
-                p={2}
-                rounded="md"
-                _hover={{ bg: "gray.700" }}
-              >
-                <HStack spacing={4}>
-                  <Box as={item.icon} size={20} />
-                  {/* Teks label hanya ditampilkan jika sidebar terbuka */}
-                  {isOpen && <Text>{item.label}</Text>}
-                </HStack>
-              </ChakraLink>
+              <Box key={item.path}>
+                <ChakraLink
+                  as={ReactRouterNavLink} // Gunakan NavLink
+                  to={item.path}
+                  _hover={{ textDecoration: "none" }}
+                >
+                  {({ isActive }) => (
+                    <HStack
+                      spacing={4}
+                      p={2}
+                      rounded="md"
+                      // Terapkan gaya hover dan aktif
+                      bg={isActive ? "gray.700" : "transparent"}
+                      _hover={{ bg: "gray.700" }}
+                      transition="background-color 0.2s ease"
+                    >
+                      <Box as={item.icon} size={20} />
+                      {isOpen && <Text>{item.label}</Text>}
+                    </HStack>
+                  )}
+                </ChakraLink>
+              </Box>
             ))}
 
             <Spacer />
@@ -91,7 +99,6 @@ const Navbar = ({ isOpen }) => {
             >
               <HStack>
                 <Box as={LogOut} size={20} />
-                {/* Teks label hanya ditampilkan jika sidebar terbuka */}
                 {isOpen && <Text>Logout</Text>}
               </HStack>
             </Button>
@@ -108,7 +115,7 @@ const Navbar = ({ isOpen }) => {
             />
           </>
         ) : (
-          <Button as={ReactRouterLink} to="/login" variant="ghost">
+          <Button as={ReactRouterNavLink} to="/login" variant="ghost">
             Login
           </Button>
         )}
