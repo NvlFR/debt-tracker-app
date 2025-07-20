@@ -1,3 +1,5 @@
+// src/App.jsx
+
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ProtectedRoute from "./components/routes/ProtectedRoute";
@@ -8,7 +10,10 @@ import DebtsPage from "./pages/DebtsPage";
 import CreditsPage from "./pages/CreditsPage";
 import ContactsPage from "./pages/ContactsPage";
 import CategoriesPage from "./pages/CategoriesPage";
+import PaymentHistoryPage from "./pages/PaymentHistoryPage";
 import LandingPage from "./pages/LandingPage";
+import ContactDetailPage from "./pages/ContactDetailPage";
+import Layout from "./layouts/Layout";
 
 const App = () => {
   return (
@@ -18,11 +23,14 @@ const App = () => {
           <Route path="/" element={<LandingPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
+
           <Route
             path="/dashboard"
             element={
               <ProtectedRoute>
-                <DashboardPage />
+                <Layout>
+                  <DashboardPage />
+                </Layout>
               </ProtectedRoute>
             }
           />
@@ -30,7 +38,9 @@ const App = () => {
             path="/utang"
             element={
               <ProtectedRoute>
-                <DebtsPage />
+                <Layout>
+                  <DebtsPage />
+                </Layout>
               </ProtectedRoute>
             }
           />
@@ -38,7 +48,9 @@ const App = () => {
             path="/piutang"
             element={
               <ProtectedRoute>
-                <CreditsPage />
+                <Layout>
+                  <CreditsPage />
+                </Layout>
               </ProtectedRoute>
             }
           />
@@ -46,7 +58,9 @@ const App = () => {
             path="/contacts"
             element={
               <ProtectedRoute>
-                <ContactsPage />
+                <Layout>
+                  <ContactsPage />
+                </Layout>
               </ProtectedRoute>
             }
           />
@@ -54,7 +68,29 @@ const App = () => {
             path="/categories"
             element={
               <ProtectedRoute>
-                <CategoriesPage />
+                <Layout>
+                  <CategoriesPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/payment-history"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <PaymentHistoryPage />
+                </Layout>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/contacts/:contactId"
+            element={
+              <ProtectedRoute>
+                <Layout>
+                  <ContactDetailPage />
+                </Layout>
               </ProtectedRoute>
             }
           />

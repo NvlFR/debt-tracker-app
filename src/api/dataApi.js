@@ -1,182 +1,253 @@
-const API_URL = "http://localhost:3001";
+// src/api/dataApi.js
+import { supabase } from "../config/supabaseClient";
 
-// Fungsi untuk Transaksi
-export const fetchTransactionsByUser = async (userId) => {
-  const response = await fetch(
-    `${API_URL}/transactions?userId=${userId}&_expand=contact&_expand=category`
-  );
-  if (!response.ok) {
-    throw new Error("Gagal mengambil data transaksi.");
-  }
-  return response.json();
+// --- USERS ---
+export const fetchUserByEmail = async (email) => {
+  const { data, error } = await supabase
+    .from("users")
+    .select("*")
+    .eq("email", email)
+    .single();
+  if (error) throw error;
+  return data;
 };
 
-export const fetchTransactionsByType = async (userId, type) => {
-  const response = await fetch(
-    `${API_URL}/transactions?userId=${userId}&type=${type}&_expand=contact&_expand=category`
-  );
-  if (!response.ok) {
-    throw new Error("Gagal mengambil data transaksi.");
-  }
-  return response.json();
+export const registerUser = async (userData) => {
+  const { data, error } = await supabase.from("users").insert([userData]);
+  if (error) throw error;
+  return data;
+};
+
+// --- TRANSACTIONS ---
+export const fetchTransactionsByType = async (user_id, type) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*, contact:contacts(name), category:categories(name)")
+    .eq("user_id", user_id)
+    .eq("type", type);
+  if (error) throw error;
+  return data;
 };
 
 export const addTransaction = async (transactionData) => {
-  const response = await fetch(`${API_URL}/transactions`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
+  const { data, error } = await supabase.from("transactions").insert([
+    {
+      ...transactionData,
+      user_id: transactionData.user_id,
     },
-    body: JSON.stringify(transactionData),
-  });
-  if (!response.ok) {
-    throw new Error("Gagal menambahkan transaksi.");
-  }
-  return response.json();
+  ]);
+
+  if (error) throw error;
+  return data;
 };
 
 export const updateTransaction = async (id, transactionData) => {
-  const response = await fetch(`${API_URL}/transactions/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(transactionData),
-  });
-  if (!response.ok) {
-    throw new Error("Gagal memperbarui transaksi.");
-  }
-  return response.json();
+  const { data, error } = await supabase
+    .from("transactions")
+    .update(transactionData)
+    .eq("id", id)
+    .eq("user_id", transactionData.user_id);
+
+  if (error) throw error;
+  return data;
 };
 
-export const deleteTransaction = async (id) => {
-  const response = await fetch(`${API_URL}/transactions/${id}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) {
-    throw new Error("Gagal menghapus transaksi.");
-  }
-  return response.json();
+// **PERBAIKAN:** Menambahkan filter user_id untuk keamanan
+export const deleteTransaction = async (transaction_id, user_id) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .delete()
+    .eq("id", transaction_id)
+    .eq("user_id", user_id);
+  if (error) throw error;
+  return data;
 };
 
-// Fungsi untuk Kontak
-export const fetchContactsByUser = async (userId) => {
-  const response = await fetch(`${API_URL}/contacts?userId=${userId}`);
-  if (!response.ok) {
-    throw new Error("Gagal mengambil data kontak.");
+// **PERBAIKAN:** Menambahkan filter user_id untuk keamanan
+export const updateTransactionStatus = async (
+  transaction_id,
+  newStatus,
+  user_id
+) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .update({ status: newStatus })
+    .eq("id", transaction_id)
+    .eq("user_id", user_id);
+  if (error) throw error;
+  return data;
+};
+
+export const fetchTransactionsByUser = async (user_id) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*, contact:contacts(name), category:categories(name)")
+    .eq("user_id", user_id);
+  if (error) throw error;
+  return data;
+};
+
+export const fetchTransactionsByContact = async (user_id, contact_id) => {
+  const { data, error } = await supabase
+    .from("transactions")
+    .select("*, contact:contacts(name), category:categories(name)")
+    .eq("user_id", user_id)
+    .eq("contact_id", contact_id);
+  if (error) throw error;
+  return data;
+};
+
+// --- PAYMENTS ---
+export const addPayment = async (paymentData) => {
+  const { data, error } = await supabase.from("payments").insert([paymentData]);
+  if (error) throw error;
+  return data;
+};
+
+// **PERBAIKAN:** Fungsi ini harus memvalidasi kepemilikan transaksi oleh user
+export const fetchPaymentsByTransactionId = async (transaction_id, user_id) => {
+  // Pertama, pastikan transaksi ini milik user yang sedang login
+  const { data: transaction, error: transactionError } = await supabase
+    .from("transactions")
+    .select("id")
+    .eq("id", transaction_id)
+    .eq("user_id", user_id)
+    .single();
+
+  if (transactionError || !transaction) {
+    throw new Error("Transaction not found or not owned by the user.");
   }
-  return response.json();
+
+  // Jika validasi berhasil, ambil pembayaran yang terkait
+  const { data, error } = await supabase
+    .from("payments")
+    .select("*")
+    .eq("transaction_id", transaction_id);
+
+  if (error) throw error;
+  return data;
+};
+
+// **PERBAIKAN:** Menggunakan satu query JOIN yang efisien dan aman
+export const fetchPaymentsByUser = async (userId) => {
+  const { data, error } = await supabase
+    .from("payments")
+    .select(
+      `
+      id,
+      amount,
+      createdAt,
+      transactions (
+        id,
+        description,
+        type,
+        user_id
+      )
+    `
+    )
+    .eq("transactions.user_id", userId);
+
+  if (error) throw error;
+
+  // Memformat data agar lebih mudah digunakan di komponen
+  const payments = data.map((payment) => ({
+    id: payment.id,
+    amount: payment.amount,
+    createdAt: payment.createdAt,
+    transactionId: payment.transactions.id,
+    transactionDescription: payment.transactions.description,
+    transactionType: payment.transactions.type,
+  }));
+
+  return payments;
+};
+
+// --- CONTACTS ---
+export const fetchContactsByUser = async (user_id) => {
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("*")
+    .eq("user_id", user_id);
+  if (error) throw error;
+  return data;
+};
+
+export const fetchContactById = async (contactId, userId) => {
+  const { data, error } = await supabase
+    .from("contacts")
+    .select("*")
+    .eq("id", contactId)
+    .eq("user_id", userId)
+    .single();
+  if (error) throw error;
+  return data;
 };
 
 export const addContact = async (contactData) => {
-  const response = await fetch(`${API_URL}/contacts`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(contactData),
-  });
-  if (!response.ok) {
-    throw new Error("Gagal menambahkan kontak.");
-  }
-  return response.json();
+  const { data, error } = await supabase.from("contacts").insert([contactData]);
+  if (error) throw error;
+  return data;
 };
 
-export const updateContact = async (id, contactData) => {
-  const response = await fetch(`${API_URL}/contacts/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(contactData),
-  });
-  if (!response.ok) {
-    throw new Error("Gagal memperbarui kontak.");
-  }
-  return response.json();
+// **PERBAIKAN:** Menambahkan filter user_id untuk keamanan
+export const updateContact = async (contact_id, updatedData, user_id) => {
+  const { data, error } = await supabase
+    .from("contacts")
+    .update(updatedData)
+    .eq("id", contact_id)
+    .eq("user_id", user_id);
+  if (error) throw error;
+  return data;
 };
 
-export const deleteContact = async (id) => {
-  const response = await fetch(`${API_URL}/contacts/${id}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) {
-    throw new Error("Gagal menghapus kontak.");
-  }
-  return response.json();
+// **PERBAIKAN:** Menambahkan filter user_id untuk keamanan
+export const deleteContact = async (contact_id, user_id) => {
+  const { data, error } = await supabase
+    .from("contacts")
+    .delete()
+    .eq("id", contact_id)
+    .eq("user_id", user_id);
+  if (error) throw error;
+  return data;
 };
 
-// Fungsi untuk Kategori
-export const fetchCategoriesByUser = async (userId) => {
-  const response = await fetch(`${API_URL}/categories?userId=${userId}`);
-  if (!response.ok) {
-    throw new Error("Gagal mengambil data kategori.");
-  }
-  return response.json();
+// --- CATEGORIES ---
+export const fetchCategoriesByUser = async (user_id) => {
+  const { data, error } = await supabase
+    .from("categories")
+    .select("*")
+    .eq("user_id", user_id);
+  if (error) throw error;
+  return data;
 };
 
 export const addCategory = async (categoryData) => {
-  const response = await fetch(`${API_URL}/categories`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(categoryData),
-  });
-  if (!response.ok) {
-    throw new Error("Gagal menambahkan kategori.");
-  }
-  return response.json();
+  const { data, error } = await supabase
+    .from("categories")
+    .insert([categoryData]);
+  if (error) throw error;
+  return data;
 };
 
-export const updateCategory = async (id, categoryData) => {
-  const response = await fetch(`${API_URL}/categories/${id}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(categoryData),
-  });
-  if (!response.ok) {
-    throw new Error("Gagal memperbarui kategori.");
-  }
-  return response.json();
+// **PERBAIKAN:** Menambahkan filter user_id untuk keamanan
+export const updateCategory = async (id, categoryData, user_id) => {
+  const { data, error } = await supabase
+    .from("categories")
+    .update(categoryData)
+    .eq("id", id)
+    .eq("user_id", user_id);
+
+  if (error) throw error;
+  return data;
 };
 
-export const deleteCategory = async (id) => {
-  const response = await fetch(`${API_URL}/categories/${id}`, {
-    method: "DELETE",
-  });
-  if (!response.ok) {
-    throw new Error("Gagal menghapus kategori.");
-  }
-  return response.json();
-};
-
-export const addPayment = async (paymentData) => {
-  const response = await fetch(`${API_URL}/payments`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(paymentData),
-  });
-  if (!response.ok) {
-    throw new Error("Gagal menambahkan pembayaran.");
-  }
-  return response.json();
-};
-
-export const updateTransactionStatus = async (transactionId, status) => {
-  const response = await fetch(`${API_URL}/transactions/${transactionId}`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ status }),
-  });
-  if (!response.ok) {
-    throw new Error("Gagal memperbarui status transaksi.");
-  }
-  return response.json();
+// **PERBAIKAN:** Menambahkan filter user_id untuk keamanan
+export const deleteCategory = async (category_id, user_id) => {
+  const { data, error } = await supabase
+    .from("categories")
+    .delete()
+    .eq("id", category_id)
+    .eq("user_id", user_id);
+  if (error) throw error;
+  return data;
 };

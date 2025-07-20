@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Heading,
@@ -31,6 +31,10 @@ import {
   Stack,
   IconButton,
   Tag,
+  useToast,
+  LinkBox,
+  LinkOverlay,
+  Badge,
 } from "@chakra-ui/react";
 import { EditIcon, DeleteIcon, CheckCircleIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
@@ -44,12 +48,13 @@ import {
   deleteTransaction,
   addPayment,
   updateTransactionStatus,
+  fetchPaymentsByTransactionId,
 } from "../api/dataApi";
-import Navbar from "../components/layout/Navbar";
 
 const CreditsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const toast = useToast();
   const { isOpen, onOpen, onClose } = useDisclosure();
   const {
     isOpen: isEditOpen,
@@ -61,11 +66,18 @@ const CreditsPage = () => {
     onOpen: onPartialPaymentOpen,
     onClose: onPartialPaymentClose,
   } = useDisclosure();
+  const {
+    isOpen: isDetailOpen,
+    onOpen: onDetailOpen,
+    onClose: onDetailClose,
+  } = useDisclosure();
+
   const [credits, setCredits] = useState([]);
   const [contacts, setContacts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [newCredit, setNewCredit] = useState({
     amount: "",
     description: "",
@@ -75,8 +87,16 @@ const CreditsPage = () => {
   });
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [paymentAmount, setPaymentAmount] = useState("");
+  const [payments, setPayments] = useState([]);
 
-  const fetchData = async () => {
+  // Menggunakan useCallback untuk memoize fungsi fetchData
+  const fetchData = useCallback(async () => {
+    if (!user) {
+      navigate("/login");
+      return;
+    }
+    setLoading(true);
+    setError(null);
     try {
       const [creditTransactions, contactData, categoryData] = await Promise.all(
         [
@@ -85,29 +105,48 @@ const CreditsPage = () => {
           fetchCategoriesByUser(user.id),
         ]
       );
-      setCredits(creditTransactions);
+
+      // Memperkaya data transaksi dengan nama kontak dan kategori
+      const enrichedCredits = creditTransactions.map((credit) => ({
+        ...credit,
+        contact: contactData.find((c) => c.id === credit.contactId),
+        category: categoryData.find((cat) => cat.id === credit.categoryId),
+      }));
+
+      setCredits(enrichedCredits);
       setContacts(contactData);
       setCategories(categoryData);
     } catch (err) {
-      setError(err.message);
+      console.error("Failed to fetch data:", err);
+      setError("Gagal memuat data. Silakan coba lagi.");
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    if (!user) {
-      navigate("/login");
-      return;
-    }
-    fetchData();
   }, [user, navigate]);
 
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   const handleAddCredit = async () => {
+    if (
+      !newCredit.amount ||
+      !newCredit.contactId ||
+      !newCredit.categoryId ||
+      !newCredit.dueDate
+    ) {
+      toast({
+        title: "Input tidak valid.",
+        description: "Semua kolom harus diisi.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      if (!newCredit.contactId || !newCredit.categoryId) {
-        return;
-      }
       const transactionData = {
         ...newCredit,
         amount: parseFloat(newCredit.amount),
@@ -127,38 +166,110 @@ const CreditsPage = () => {
         categoryId: "",
         dueDate: "",
       });
+      toast({
+        title: "Piutang baru berhasil ditambahkan.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (err) {
-      setError(err.message);
+      console.error("Failed to add credit:", err);
+      toast({
+        title: "Gagal menambah piutang.",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleEditClick = (transaction) => {
-    setSelectedTransaction(transaction);
+    setSelectedTransaction({
+      ...transaction,
+      // Memastikan format tanggal kompatibel dengan input type="date"
+      dueDate: transaction.dueDate.split("T")[0],
+      amount: transaction.amount.toString(),
+    });
     onEditOpen();
   };
 
   const handleUpdateTransaction = async () => {
+    if (
+      !selectedTransaction.amount ||
+      !selectedTransaction.contactId ||
+      !selectedTransaction.categoryId ||
+      !selectedTransaction.dueDate
+    ) {
+      toast({
+        title: "Input tidak valid.",
+        description: "Semua kolom harus diisi.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
     try {
-      await updateTransaction(selectedTransaction.id, selectedTransaction);
+      await updateTransaction(selectedTransaction.id, {
+        ...selectedTransaction,
+        amount: parseFloat(selectedTransaction.amount),
+      });
       fetchData();
       onEditClose();
       setSelectedTransaction(null);
+      toast({
+        title: "Piutang berhasil diperbarui.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (err) {
-      setError(err.message);
+      console.error("Failed to update transaction:", err);
+      toast({
+        title: "Gagal memperbarui piutang.",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDeleteTransaction = async (transactionId) => {
+    if (!window.confirm("Apakah Anda yakin ingin menghapus piutang ini?")) {
+      return;
+    }
     try {
       await deleteTransaction(transactionId);
       fetchData();
+      toast({
+        title: "Piutang berhasil dihapus.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (err) {
-      setError(err.message);
+      console.error("Failed to delete transaction:", err);
+      toast({
+        title: "Gagal menghapus piutang.",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
   };
 
   const handleOpenPartialPayment = (transaction) => {
     setSelectedTransaction(transaction);
+    setPaymentAmount(""); // Reset nilai saat modal dibuka
     onPartialPaymentOpen();
   };
 
@@ -169,11 +280,27 @@ const CreditsPage = () => {
       amount <= 0 ||
       amount > selectedTransaction.currentAmount
     ) {
-      alert("Jumlah pembayaran tidak valid.");
+      toast({
+        title: "Pembayaran tidak valid.",
+        description: "Jumlah harus positif dan tidak melebihi sisa piutang.",
+        status: "warning",
+        duration: 3000,
+        isClosable: true,
+      });
       return;
     }
+
+    setIsSubmitting(true);
     try {
-      // 1. Tambahkan pembayaran ke riwayat pembayaran
+      const newCurrentAmount = selectedTransaction.currentAmount - amount;
+      const newStatus = newCurrentAmount <= 0 ? "paid" : "ongoing";
+
+      await updateTransaction(selectedTransaction.id, {
+        ...selectedTransaction,
+        currentAmount: newCurrentAmount,
+        status: newStatus,
+      });
+
       const paymentData = {
         transactionId: selectedTransaction.id,
         amount: amount,
@@ -181,28 +308,94 @@ const CreditsPage = () => {
       };
       await addPayment(paymentData);
 
-      // 2. Perbarui jumlah sisa transaksi
-      const newCurrentAmount = selectedTransaction.currentAmount - amount;
-      await updateTransaction(selectedTransaction.id, {
-        ...selectedTransaction,
-        currentAmount: newCurrentAmount,
-      });
-
       fetchData();
       onPartialPaymentClose();
       setPaymentAmount("");
+      toast({
+        title: "Pembayaran berhasil disimpan.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (err) {
-      setError(err.message);
+      console.error("Failed to save partial payment:", err);
+      toast({
+        title: "Gagal menyimpan pembayaran.",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleViewDetails = async (transaction) => {
+    setLoading(true);
+    onDetailOpen();
+    try {
+      const fetchedPayments = await fetchPaymentsByTransactionId(
+        transaction.id
+      );
+      setSelectedTransaction(transaction);
+      setPayments(fetchedPayments);
+    } catch (err) {
+      console.error("Failed to load details:", err);
+      toast({
+        title: "Gagal memuat detail.",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
   const handleMarkAsPaid = async (transaction) => {
+    if (
+      !window.confirm(
+        "Apakah Anda yakin ingin menandai piutang ini sebagai lunas?"
+      )
+    ) {
+      return;
+    }
     try {
       await updateTransactionStatus(transaction.id, "paid");
       fetchData();
+      toast({
+        title: "Status piutang berhasil diperbarui menjadi lunas.",
+        status: "success",
+        duration: 3000,
+        isClosable: true,
+      });
     } catch (err) {
-      setError(err.message);
+      console.error("Failed to mark as paid:", err);
+      toast({
+        title: "Gagal memperbarui status.",
+        description: err.message,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+      });
     }
+  };
+
+  const totalCredits = credits
+    .filter((t) => t.status === "ongoing")
+    .reduce((sum, t) => sum + t.currentAmount, 0);
+
+  // Fungsi untuk format tanggal
+  const formatDate = (dateString) => {
+    if (!dateString) return "Tidak ada tanggal";
+    const date = new Date(dateString);
+    return date.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
   };
 
   if (loading) {
@@ -224,13 +417,8 @@ const CreditsPage = () => {
     );
   }
 
-  const totalCredits = credits
-    .filter((t) => t.status === "ongoing")
-    .reduce((sum, t) => sum + t.currentAmount, 0);
-
   return (
     <Box>
-      <Navbar />
       <Box p={8}>
         <Flex mb={6} alignItems="center">
           <Heading>Daftar Piutang</Heading>
@@ -255,87 +443,105 @@ const CreditsPage = () => {
         </SimpleGrid>
         <Box p={5} shadow="md" borderWidth="1px" borderRadius="md">
           <Heading size="md" mb={4}>
-            Transaksi Terbaru
+            Daftar Transaksi Piutang
           </Heading>
           {credits.length === 0 ? (
             <Text>Tidak ada piutang yang tercatat.</Text>
           ) : (
             <List spacing={3}>
               {credits.map((credit) => (
-                <ListItem
+                <LinkBox
+                  as={ListItem}
                   key={credit.id}
                   p={3}
                   borderWidth="1px"
                   borderRadius="md"
+                  _hover={{ bg: "gray.700" }}
+                  cursor="pointer"
                 >
-                  <Flex alignItems="center">
-                    <Box>
-                      <Text fontWeight="bold" color="green.500">
-                        {new Intl.NumberFormat("id-ID", {
-                          style: "currency",
-                          currency: "IDR",
-                          minimumFractionDigits: 0,
-                        }).format(credit.currentAmount)}
-                      </Text>
-                      <Text fontSize="sm">
-                        {credit.contact
-                          ? credit.contact.name
-                          : "Kontak tidak diketahui"}
-                      </Text>
-                      <Text fontSize="sm" color="gray.500">
-                        Kategori:{" "}
-                        {credit.category
-                          ? credit.category.name
-                          : "Tidak ada kategori"}
-                      </Text>
-                    </Box>
-                    <Spacer />
-                    <Box>
-                      <Flex mb={2} justifyContent="flex-end">
-                        {credit.status === "paid" ? (
-                          <Tag colorScheme="green">Lunas</Tag>
-                        ) : (
-                          <Tag colorScheme="yellow">Sedang Berjalan</Tag>
-                        )}
-                      </Flex>
-                      <Flex>
-                        {credit.status === "ongoing" &&
-                          credit.currentAmount > 0 && (
-                            <>
+                  <LinkOverlay onClick={() => handleViewDetails(credit)}>
+                    <Flex alignItems="center">
+                      <Box>
+                        <Text fontWeight="bold" color="green.500">
+                          {new Intl.NumberFormat("id-ID", {
+                            style: "currency",
+                            currency: "IDR",
+                            minimumFractionDigits: 0,
+                          }).format(credit.currentAmount)}
+                        </Text>
+                        <Text fontSize="sm">
+                          {credit.contact
+                            ? credit.contact.name
+                            : "Kontak tidak diketahui"}
+                        </Text>
+                        <Text fontSize="sm" color="gray.500">
+                          Kategori:{" "}
+                          {credit.category
+                            ? credit.category.name
+                            : "Tidak ada kategori"}
+                        </Text>
+                      </Box>
+                      <Spacer />
+                      <Box>
+                        <Flex mb={2} justifyContent="flex-end">
+                          {credit.status === "paid" ? (
+                            <Tag colorScheme="green">Lunas</Tag>
+                          ) : (
+                            <Tag colorScheme="yellow">Sedang Berjalan</Tag>
+                          )}
+                        </Flex>
+                        <Flex>
+                          {credit.status === "ongoing" &&
+                            credit.currentAmount > 0 && (
                               <Button
                                 size="sm"
                                 mr={2}
-                                onClick={() => handleOpenPartialPayment(credit)}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleOpenPartialPayment(credit);
+                                }}
                               >
                                 Bayar
                               </Button>
-                              {credit.currentAmount === credit.amount && (
-                                <Button
-                                  size="sm"
-                                  colorScheme="green"
-                                  onClick={() => handleMarkAsPaid(credit)}
-                                >
-                                  Lunas
-                                </Button>
-                              )}
-                            </>
+                            )}
+                          {credit.status === "ongoing" && (
+                            <IconButton
+                              icon={<CheckCircleIcon />}
+                              size="sm"
+                              mr={2}
+                              colorScheme="green"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMarkAsPaid(credit);
+                              }}
+                              aria-label="Tandai sebagai Lunas"
+                            />
                           )}
-                        <IconButton
-                          icon={<EditIcon />}
-                          mr={2}
-                          size="sm"
-                          onClick={() => handleEditClick(credit)}
-                        />
-                        <IconButton
-                          icon={<DeleteIcon />}
-                          size="sm"
-                          colorScheme="red"
-                          onClick={() => handleDeleteTransaction(credit.id)}
-                        />
-                      </Flex>
-                    </Box>
-                  </Flex>
-                </ListItem>
+                          <IconButton
+                            icon={<EditIcon />}
+                            mr={2}
+                            size="sm"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditClick(credit);
+                            }}
+                            aria-label="Edit Transaksi"
+                          />
+                          <IconButton
+                            icon={<DeleteIcon />}
+                            size="sm"
+                            colorScheme="red"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteTransaction(credit.id);
+                            }}
+                            aria-label="Hapus Transaksi"
+                          />
+                        </Flex>
+                      </Box>
+                    </Flex>
+                  </LinkOverlay>
+                </LinkBox>
               ))}
             </List>
           )}
@@ -360,7 +566,7 @@ const CreditsPage = () => {
                   }
                 />
               </FormControl>
-              <FormControl isRequired>
+              <FormControl>
                 <FormLabel>Deskripsi</FormLabel>
                 <Input
                   value={newCredit.description}
@@ -414,10 +620,15 @@ const CreditsPage = () => {
             </Stack>
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handleAddCredit}>
+            <Button
+              colorScheme="teal"
+              mr={3}
+              onClick={handleAddCredit}
+              isLoading={isSubmitting}
+            >
               Simpan
             </Button>
-            <Button variant="ghost" onClick={onClose}>
+            <Button variant="ghost" onClick={onClose} isDisabled={isSubmitting}>
               Batal
             </Button>
           </ModalFooter>
@@ -441,12 +652,12 @@ const CreditsPage = () => {
                     onChange={(e) =>
                       setSelectedTransaction({
                         ...selectedTransaction,
-                        amount: parseFloat(e.target.value),
+                        amount: e.target.value,
                       })
                     }
                   />
                 </FormControl>
-                <FormControl isRequired>
+                <FormControl>
                   <FormLabel>Deskripsi</FormLabel>
                   <Input
                     value={selectedTransaction.description}
@@ -513,10 +724,19 @@ const CreditsPage = () => {
             )}
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handleUpdateTransaction}>
+            <Button
+              colorScheme="teal"
+              mr={3}
+              onClick={handleUpdateTransaction}
+              isLoading={isSubmitting}
+            >
               Simpan Perubahan
             </Button>
-            <Button variant="ghost" onClick={onEditClose}>
+            <Button
+              variant="ghost"
+              onClick={onEditClose}
+              isDisabled={isSubmitting}
+            >
               Batal
             </Button>
           </ModalFooter>
@@ -554,11 +774,120 @@ const CreditsPage = () => {
             )}
           </ModalBody>
           <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handlePartialPayment}>
+            <Button
+              colorScheme="teal"
+              mr={3}
+              onClick={handlePartialPayment}
+              isLoading={isSubmitting}
+            >
               Simpan Pembayaran
             </Button>
-            <Button variant="ghost" onClick={onPartialPaymentClose}>
+            <Button
+              variant="ghost"
+              onClick={onPartialPaymentClose}
+              isDisabled={isSubmitting}
+            >
               Batal
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+
+      {/* Modal untuk Detail Transaksi */}
+      <Modal isOpen={isDetailOpen} onClose={onDetailClose}>
+        <ModalOverlay />
+        <ModalContent>
+          <ModalHeader>Detail Transaksi</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            {selectedTransaction && (
+              <Stack spacing={3}>
+                <Text>
+                  Jumlah Awal:{" "}
+                  {new Intl.NumberFormat("id-ID", {
+                    style: "currency",
+                    currency: "IDR",
+                    minimumFractionDigits: 0,
+                  }).format(selectedTransaction.amount)}
+                </Text>
+                <Text>
+                  Sisa Piutang:{" "}
+                  <Badge
+                    colorScheme={
+                      selectedTransaction.status === "paid" ? "green" : "yellow"
+                    }
+                  >
+                    {new Intl.NumberFormat("id-ID", {
+                      style: "currency",
+                      currency: "IDR",
+                      minimumFractionDigits: 0,
+                    }).format(selectedTransaction.currentAmount)}
+                  </Badge>
+                </Text>
+                <Text>
+                  Status:{" "}
+                  <Badge
+                    colorScheme={
+                      selectedTransaction.status === "paid" ? "green" : "yellow"
+                    }
+                  >
+                    {selectedTransaction.status === "paid"
+                      ? "Lunas"
+                      : "Sedang Berjalan"}
+                  </Badge>
+                </Text>
+                <Text>Deskripsi: {selectedTransaction.description}</Text>
+                <Text>
+                  Pihak Terkait:{" "}
+                  {selectedTransaction.contact
+                    ? selectedTransaction.contact.name
+                    : "Tidak diketahui"}
+                </Text>
+                <Text>
+                  Kategori:{" "}
+                  {selectedTransaction.category
+                    ? selectedTransaction.category.name
+                    : "Tidak ada"}
+                </Text>
+                <Text>
+                  Tanggal Jatuh Tempo: {formatDate(selectedTransaction.dueDate)}
+                </Text>
+                <Heading size="sm" mt={4}>
+                  Riwayat Pembayaran
+                </Heading>
+                {payments.length === 0 ? (
+                  <Text>Belum ada pembayaran.</Text>
+                ) : (
+                  <List spacing={2}>
+                    {payments.map((payment) => (
+                      <ListItem
+                        key={payment.id}
+                        p={2}
+                        bg="gray.100"
+                        borderRadius="md"
+                      >
+                        <Stack spacing={0}>
+                          <Text fontWeight="bold">
+                            {new Intl.NumberFormat("id-ID", {
+                              style: "currency",
+                              currency: "IDR",
+                              minimumFractionDigits: 0,
+                            }).format(payment.amount)}
+                          </Text>
+                          <Text fontSize="sm" color="gray.500">
+                            {formatDate(payment.createdAt)}
+                          </Text>
+                        </Stack>
+                      </ListItem>
+                    ))}
+                  </List>
+                )}
+              </Stack>
+            )}
+          </ModalBody>
+          <ModalFooter>
+            <Button colorScheme="teal" onClick={onDetailClose}>
+              Tutup
             </Button>
           </ModalFooter>
         </ModalContent>
