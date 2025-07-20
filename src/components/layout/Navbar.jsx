@@ -1,26 +1,47 @@
+// src/components/layout/Navbar.jsx
 import {
   Box,
-  Flex,
-  Spacer,
   Heading,
   Button,
-  Menu,
-  MenuButton,
-  MenuList,
-  MenuItem,
+  VStack,
   useColorMode,
   IconButton,
-  useDisclosure,
+  Link as ChakraLink,
+  Flex,
+  Spacer,
+  List,
+  ListItem,
+  ListIcon,
+  Text,
 } from "@chakra-ui/react";
-import { MoonIcon, SunIcon, HamburgerIcon } from "@chakra-ui/icons";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import {
+  Moon,
+  Sun,
+  LayoutDashboard,
+  Notebook,
+  Wallet,
+  Users,
+  Folder,
+  History,
+  LogOut,
+} from "lucide-react"; // Import ikon dari lucide-react
+import { Link as ReactRouterLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
-const Navbar = () => {
+// Definisikan item navigasi dengan ikon yang sesuai
+const navItems = [
+  { path: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { path: "/utang", label: "Utang", icon: Notebook },
+  { path: "/piutang", label: "Piutang", icon: Wallet },
+  { path: "/contacts", label: "Pihak Terkait", icon: Users },
+  { path: "/categories", label: "Kategori", icon: Folder },
+  { path: "/payment-history", label: "Riwayat Pembayaran", icon: History },
+];
+
+const Navbar = ({ isOpen }) => {
   const { user, logout } = useAuth();
   const { colorMode, toggleColorMode } = useColorMode();
   const navigate = useNavigate();
-  const { isOpen, onOpen, onClose } = useDisclosure();
 
   const handleLogout = () => {
     logout();
@@ -28,115 +49,67 @@ const Navbar = () => {
   };
 
   return (
-    <Box bg="teal.500" p={4} color="white">
-      <Flex alignItems="center">
-        <Heading as="h1" size="md">
-          <RouterLink to="/dashboard">Debt Tracker App</RouterLink>
+    <VStack spacing={4} align="stretch" flex="1">
+      {/* Judul Aplikasi - Tampilkan hanya jika sidebar terbuka */}
+      {isOpen && (
+        <Heading as="h1" size="md" mb={4}>
+          <ChakraLink
+            as={ReactRouterLink}
+            to="/dashboard"
+            _hover={{ textDecoration: "none" }}
+          >
+            Debt Tracker App
+          </ChakraLink>
         </Heading>
-        <Spacer />
+      )}
+
+      {/* Navigasi Utama - Tampilkan hanya jika sidebar terbuka */}
+      <VStack spacing={2} align="stretch" display={isOpen ? "flex" : "none"}>
         {user ? (
           <>
-            <Box display={{ base: "none", md: "flex" }}>
-              <Button as={RouterLink} to="/dashboard" variant="ghost" mx={2}>
-                Dashboard
-              </Button>
-              <Button as={RouterLink} to="/utang" variant="ghost" mx={2}>
-                Utang
-              </Button>
-              <Button as={RouterLink} to="/piutang" variant="ghost" mx={2}>
-                Piutang
-              </Button>
-              <Button as={RouterLink} to="/contacts" variant="ghost" mx={2}>
-                Pihak Terkait
-              </Button>
-              <Button as={RouterLink} to="/categories" variant="ghost" mx={2}>
-                Kategori
-              </Button>
-              <Button as={RouterLink} to="/payment-history" variant="ghost" mx={2}>
-                Riwayat Pembayaran
-              </Button>
-              <Button onClick={handleLogout} variant="ghost" mx={2}>
-                Logout
-              </Button>
-              <IconButton
-                onClick={toggleColorMode}
-                icon={colorMode === "light" ? <MoonIcon /> : <SunIcon />}
-                variant="ghost"
-              />
-            </Box>
-            <Box display={{ base: "block", md: "none" }}>
-              <Menu isOpen={isOpen} onOpen={onOpen} onClose={onClose}>
-                <MenuButton
-                  as={IconButton}
-                  icon={<HamburgerIcon />}
-                  variant="ghost"
-                />
-                <MenuList bg="teal.500">
-                  <MenuItem
-                    as={RouterLink}
-                    to="/dashboard"
-                    onClick={onClose}
-                    bg="teal.500"
-                  >
-                    Dashboard
-                  </MenuItem>
-                  <MenuItem
-                    as={RouterLink}
-                    to="/utang"
-                    onClick={onClose}
-                    bg="teal.500"
-                  >
-                    Utang
-                  </MenuItem>
-                  <MenuItem
-                    as={RouterLink}
-                    to="/piutang"
-                    onClick={onClose}
-                    bg="teal.500"
-                  >
-                    Piutang
-                  </MenuItem>
-                  <MenuItem
-                    as={RouterLink}
-                    to="/contacts"
-                    onClick={onClose}
-                    bg="teal.500"
-                  >
-                    Pihak Terkait
-                  </MenuItem>
-                  <MenuItem
-                    as={RouterLink}
-                    to="/categories"
-                    onClick={onClose}
-                    bg="teal.500"
-                  >
-                    Kategori
-                  </MenuItem>
-                  <MenuItem
-                    as={RouterLink}
-                    to="/payment-history"
-                    onClick={onClose}
-                    bg="teal.500"
-                  >
-                    Riwayat Pembayaran
-                  </MenuItem>
-                  <MenuItem onClick={handleLogout} bg="teal.500">
-                    Logout
-                  </MenuItem>
-                  <MenuItem onClick={toggleColorMode} bg="teal.500">
-                    {colorMode === "light" ? "Dark Mode" : "Light Mode"}
-                  </MenuItem>
-                </MenuList>
-              </Menu>
-            </Box>
+            {navItems.map((item) => (
+              <ChakraLink
+                key={item.path}
+                as={ReactRouterLink}
+                to={item.path}
+                p={2}
+                rounded="md"
+                _hover={{ bg: "gray.700" }}
+              >
+                <HStack spacing={4}>
+                  <Box as={item.icon} size={20} />
+                  <Text>{item.label}</Text>
+                </HStack>
+              </ChakraLink>
+            ))}
+
+            <Spacer />
+
+            <Button onClick={handleLogout} colorScheme="red" mt={4}>
+              <HStack>
+                <Box as={LogOut} size={20} />
+                <Text>Logout</Text>
+              </HStack>
+            </Button>
+
+            <IconButton
+              onClick={toggleColorMode}
+              icon={
+                colorMode === "light" ? <Moon size={20} /> : <Sun size={20} />
+              }
+              variant="ghost"
+              color="white"
+              _hover={{ bg: "gray.700" }}
+              aria-label="Toggle color mode"
+            />
           </>
         ) : (
-          <Button as={RouterLink} to="/login" variant="ghost">
+          <Button as={ReactRouterLink} to="/login" variant="ghost">
             Login
           </Button>
         )}
-      </Flex>
-    </Box>
+      </VStack>
+    </VStack>
   );
 };
 
