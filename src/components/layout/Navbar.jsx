@@ -7,11 +7,8 @@ import {
   useColorMode,
   IconButton,
   Link as ChakraLink,
-  Flex,
+  HStack, // Tambahkan HStack di sini
   Spacer,
-  List,
-  ListItem,
-  ListIcon,
   Text,
 } from "@chakra-ui/react";
 import {
@@ -24,7 +21,7 @@ import {
   Folder,
   History,
   LogOut,
-} from "lucide-react"; // Import ikon dari lucide-react
+} from "lucide-react";
 import { Link as ReactRouterLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
 
@@ -63,8 +60,8 @@ const Navbar = ({ isOpen }) => {
         </Heading>
       )}
 
-      {/* Navigasi Utama - Tampilkan hanya jika sidebar terbuka */}
-      <VStack spacing={2} align="stretch" display={isOpen ? "flex" : "none"}>
+      {/* Navigasi Utama - VStack ini selalu ditampilkan */}
+      <VStack spacing={2} align="stretch">
         {user ? (
           <>
             {navItems.map((item) => (
@@ -78,17 +75,24 @@ const Navbar = ({ isOpen }) => {
               >
                 <HStack spacing={4}>
                   <Box as={item.icon} size={20} />
-                  <Text>{item.label}</Text>
+                  {/* Teks label hanya ditampilkan jika sidebar terbuka */}
+                  {isOpen && <Text>{item.label}</Text>}
                 </HStack>
               </ChakraLink>
             ))}
 
             <Spacer />
 
-            <Button onClick={handleLogout} colorScheme="red" mt={4}>
+            <Button
+              onClick={handleLogout}
+              colorScheme="red"
+              mt={4}
+              justifyContent={isOpen ? "start" : "center"}
+            >
               <HStack>
                 <Box as={LogOut} size={20} />
-                <Text>Logout</Text>
+                {/* Teks label hanya ditampilkan jika sidebar terbuka */}
+                {isOpen && <Text>Logout</Text>}
               </HStack>
             </Button>
 
