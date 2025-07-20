@@ -1,3 +1,4 @@
+// src/pages/PaymentHistoryPage.jsx
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -16,7 +17,7 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { fetchPaymentsByUser, fetchTransactionsByUser } from "../api/dataApi";
+import { fetchPaymentsByUser } from "../api/dataApi"; // Import fungsi yang sudah diperbarui
 
 const PaymentHistoryPage = () => {
   const { user } = useAuth();
@@ -33,21 +34,9 @@ const PaymentHistoryPage = () => {
 
     const fetchData = async () => {
       try {
-        const allPayments = await fetchPaymentsByUser(user.id);
-        const allTransactions = await fetchTransactionsByUser(user.id);
-
-        const enrichedPayments = allPayments.map((payment) => {
-          const transaction = allTransactions.find(
-            (t) => t.id === payment.transactionId
-          );
-          return {
-            ...payment,
-            transactionType: transaction?.type,
-            transactionDescription: transaction?.description,
-          };
-        });
-
-        setPayments(enrichedPayments);
+        // Panggil fungsi yang sudah aman
+        const userPayments = await fetchPaymentsByUser(user.id);
+        setPayments(userPayments);
       } catch (err) {
         setError(err.message);
       } finally {

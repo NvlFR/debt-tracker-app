@@ -43,8 +43,8 @@ import {
 } from "react-icons/fa";
 import { Link as RouterLink } from "react-router-dom";
 import { supabase } from "../../config/supabaseClient";
-import AddCreditModal from "../../components/AddCreditModal";
-import RecordPaymentModal from "../../components/RecordPaymentModal";
+import AddCreditModal from "../../components/modal/creditModal/components/AddCreditModal";
+import RecordPaymentModal from "../../components/modal/recordModal/components/RecordPaymentModal";
 
 // Daftarkan komponen Chart.js yang akan kita gunakan
 ChartJS.register(

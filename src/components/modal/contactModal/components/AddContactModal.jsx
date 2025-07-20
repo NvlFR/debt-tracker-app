@@ -16,8 +16,8 @@ import {
   VStack,
   useToast,
 } from "@chakra-ui/react";
-import { useAuth } from "../context/AuthContext";
-import { addContact } from "../api/dataApi";
+import { useAuth } from "../../../../context/AuthContext";
+import { addContact } from "../../../../api/dataApi";
 
 const AddContactModal = ({ isOpen, onClose, onAddSuccess }) => {
   const [formData, setFormData] = useState({ name: "", email: "", phone: "" });

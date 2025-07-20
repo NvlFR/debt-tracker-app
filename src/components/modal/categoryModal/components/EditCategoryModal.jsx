@@ -1,4 +1,4 @@
-// src/components/EditContactModal.jsx
+// src/components/EditCategoryModal.jsx
 
 import React, { useState, useEffect } from "react";
 import {
@@ -13,23 +13,25 @@ import {
   FormControl,
   FormLabel,
   Input,
-  VStack,
+  Stack,
   useToast,
 } from "@chakra-ui/react";
-import { useAuth } from "../context/AuthContext";
-import { updateContact } from "../api/dataApi";
+import { supabase } from "../../../../config/supabaseClient";
+import { useAuth } from "../../../../context/AuthContext";
+import { updateCategory } from "../../../../api/dataApi"; // Pastikan fungsi ini ada
 
-const EditContactModal = ({ isOpen, onClose, contact, onUpdateSuccess }) => {
+const EditCategoryModal = ({ isOpen, onClose, category, onUpdateSuccess }) => {
   const [formData, setFormData] = useState({});
   const [loading, setLoading] = useState(false);
   const toast = useToast();
   const { user } = useAuth();
 
+  // Mengisi form dengan data kategori yang dipilih saat modal dibuka
   useEffect(() => {
-    if (contact) {
-      setFormData(contact);
+    if (category) {
+      setFormData(category);
     }
-  }, [contact]);
+  }, [category]);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -37,6 +39,7 @@ const EditContactModal = ({ isOpen, onClose, contact, onUpdateSuccess }) => {
 
   const handleSubmit = async () => {
     setLoading(true);
+
     if (!user) {
       toast({ title: "User tidak terautentikasi.", status: "error" });
       setLoading(false);
@@ -44,21 +47,20 @@ const EditContactModal = ({ isOpen, onClose, contact, onUpdateSuccess }) => {
     }
 
     try {
+      // Perbaiki: Pastikan data yang dikirim tidak mengandung `userId`
       const dataToUpdate = {
         name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        user_id: user.id, // <--- Perbaikan: Gunakan user_id
+        user_id: user.id, // Menambahkan user_id
       };
 
-      await updateContact(contact.id, dataToUpdate);
+      await updateCategory(category.id, dataToUpdate);
 
-      toast({ title: "Kontak berhasil diperbarui!", status: "success" });
+      toast({ title: "Kategori berhasil diperbarui!", status: "success" });
       onClose();
-      onUpdateSuccess();
+      onUpdateSuccess(); // Panggil callback untuk me-refresh data di halaman utama
     } catch (err) {
-      console.error("Error updating contact:", err);
-      toast({ title: "Gagal memperbarui kontak", status: "error" });
+      console.error("Error updating category:", err);
+      toast({ title: "Gagal memperbarui kategori", status: "error" });
     } finally {
       setLoading(false);
     }
@@ -68,38 +70,20 @@ const EditContactModal = ({ isOpen, onClose, contact, onUpdateSuccess }) => {
     <Modal isOpen={isOpen} onClose={onClose}>
       <ModalOverlay />
       <ModalContent>
-        <ModalHeader>Edit Kontak</ModalHeader>
+        <ModalHeader>Edit Kategori</ModalHeader>
         <ModalCloseButton />
         <ModalBody>
           {formData && (
-            <VStack spacing={4}>
+            <Stack spacing={4}>
               <FormControl isRequired>
-                <FormLabel>Nama</FormLabel>
+                <FormLabel>Nama Kategori</FormLabel>
                 <Input
                   name="name"
                   value={formData.name || ""}
                   onChange={handleChange}
                 />
               </FormControl>
-              <FormControl isRequired>
-                <FormLabel>Email</FormLabel>
-                <Input
-                  name="email"
-                  type="email"
-                  value={formData.email || ""}
-                  onChange={handleChange}
-                />
-              </FormControl>
-              <FormControl>
-                <FormLabel>Nomor HP</FormLabel>
-                <Input
-                  name="phone"
-                  type="tel"
-                  value={formData.phone || ""}
-                  onChange={handleChange}
-                />
-              </FormControl>
-            </VStack>
+            </Stack>
           )}
         </ModalBody>
         <ModalFooter>
@@ -120,4 +104,4 @@ const EditContactModal = ({ isOpen, onClose, contact, onUpdateSuccess }) => {
   );
 };
 
-export default EditContactModal;
+export default EditCategoryModal;

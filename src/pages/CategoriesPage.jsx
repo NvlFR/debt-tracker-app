@@ -19,8 +19,8 @@ import { EditIcon, DeleteIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { fetchCategoriesByUser, deleteCategory } from "../api/dataApi";
-import AddCategoryModal from "../components/AddCategoryModal"; // Import modal yang sudah kita buat
-import EditCategoryModal from "../components/EditCategoryModal"; // Asumsikan Anda akan membuat modal ini
+import AddCategoryModal from "../components/modal/categoryModal/components/AddCategoryModal"; // Import modal yang sudah kita buat
+import EditCategoryModal from "../components/modal/categoryModal/components/EditCategoryModal"; // Asumsikan Anda akan membuat modal ini
 
 const CategoriesPage = () => {
   const { user } = useAuth();

@@ -1,61 +1,59 @@
 import { useEffect, useState } from "react";
+// src/pages/DebtsPage.jsx
 import {
   Box,
   Heading,
   Text,
-  Button,
   Spinner,
   Center,
-  Alert,
-  AlertIcon,
-  SimpleGrid,
-  Stat,
-  StatLabel,
-  StatNumber,
   List,
   ListItem,
   Flex,
   Spacer,
+  Badge,
+  IconButton,
+  Alert,
+  AlertIcon,
   useDisclosure,
+  useToast,
   Modal,
   ModalOverlay,
   ModalContent,
   ModalHeader,
-  ModalFooter,
-  ModalBody,
   ModalCloseButton,
-  FormControl,
-  FormLabel,
-  Input,
-  Select,
-  Stack,
-  IconButton,
-  Tag,
-  useToast,
-  LinkBox,
-  LinkOverlay,
-  Badge,
+  ModalBody,
+  ModalFooter,
+  Button,
+  SimpleGrid, // <-- Tambahkan ini
+  Stat, // <-- Pastikan juga ada
+  StatLabel, // <-- Pastikan juga ada
+  StatNumber, // <-- Pastikan juga ada
 } from "@chakra-ui/react";
-import { EditIcon, DeleteIcon, CheckCircleIcon } from "@chakra-ui/icons";
+import { EditIcon, DeleteIcon } from "@chakra-ui/icons";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import {
   fetchTransactionsByType,
-  addTransaction,
   fetchContactsByUser,
   fetchCategoriesByUser,
-  updateTransaction,
   deleteTransaction,
-  addPayment,
   updateTransactionStatus,
   fetchPaymentsByTransactionId,
 } from "../api/dataApi";
+import AddDebtModal from "../components/modal/debtModal/components/AddDebtModal";
+import EditDebtModal from "../components/modal/debtModal/components/EditDebtModal";
+import RecordPartialPaymentModal from "../components/modal/recordModal/components/RecordPartialPaymentModal";
 
 const DebtsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const toast = useToast();
-  const { isOpen, onOpen, onClose } = useDisclosure();
+
+  const {
+    isOpen: isAddOpen,
+    onOpen: onAddOpen,
+    onClose: onAddClose,
+  } = useDisclosure();
   const {
     isOpen: isEditOpen,
     onOpen: onEditOpen,
@@ -77,26 +75,18 @@ const DebtsPage = () => {
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [newDebt, setNewDebt] = useState({
-    amount: "",
-    description: "",
-    contactId: "",
-    categoryId: "",
-    dueDate: "",
-  });
   const [selectedTransaction, setSelectedTransaction] = useState(null);
-  const [paymentAmount, setPaymentAmount] = useState("");
   const [payments, setPayments] = useState([]);
 
   const fetchData = async () => {
     try {
+      if (!user) return;
       const [debtTransactions, contactData, categoryData] = await Promise.all([
         fetchTransactionsByType(user.id, "utang"),
         fetchContactsByUser(user.id),
         fetchCategoriesByUser(user.id),
       ]);
 
-      // Memperkaya data transaksi dengan nama kontak dan kategori
       const enrichedDebts = debtTransactions.map((debt) => ({
         ...debt,
         contact: contactData.find((c) => c.id === debt.contactId),
@@ -107,6 +97,7 @@ const DebtsPage = () => {
       setContacts(contactData);
       setCategories(categoryData);
     } catch (err) {
+      console.error("Error fetching data:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -121,49 +112,9 @@ const DebtsPage = () => {
     fetchData();
   }, [user, navigate]);
 
-  const handleAddDebt = async () => {
-    try {
-      if (!newDebt.contactId || !newDebt.categoryId) {
-        return;
-      }
-      const transactionData = {
-        ...newDebt,
-        amount: parseFloat(newDebt.amount),
-        currentAmount: parseFloat(newDebt.amount),
-        type: "utang",
-        status: "ongoing",
-        userId: user.id,
-        createdAt: new Date().toISOString(),
-      };
-      await addTransaction(transactionData);
-      fetchData();
-      onClose();
-      setNewDebt({
-        amount: "",
-        description: "",
-        contactId: "",
-        categoryId: "",
-        dueDate: "",
-      });
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
   const handleEditClick = (transaction) => {
     setSelectedTransaction(transaction);
     onEditOpen();
-  };
-
-  const handleUpdateTransaction = async () => {
-    try {
-      await updateTransaction(selectedTransaction.id, selectedTransaction);
-      fetchData();
-      onEditClose();
-      setSelectedTransaction(null);
-    } catch (err) {
-      setError(err.message);
-    }
   };
 
   const handleDeleteTransaction = async (transactionId) => {
@@ -171,6 +122,7 @@ const DebtsPage = () => {
       await deleteTransaction(transactionId);
       fetchData();
     } catch (err) {
+      console.error("Error deleting transaction:", err);
       setError(err.message);
     }
   };
@@ -180,62 +132,15 @@ const DebtsPage = () => {
     onPartialPaymentOpen();
   };
 
-  const handlePartialPayment = async () => {
-    const amount = parseFloat(paymentAmount);
-    if (
-      isNaN(amount) ||
-      amount <= 0 ||
-      amount > selectedTransaction.currentAmount
-    ) {
-      toast({
-        title: "Pembayaran tidak valid.",
-        description: "Jumlah harus positif dan tidak melebihi sisa utang.",
-        status: "warning",
-        duration: 3000,
-        isClosable: true,
-      });
-      return;
-    }
-
+  const handleMarkAsPaid = async (transaction) => {
     try {
-      const newCurrentAmount = selectedTransaction.currentAmount - amount;
-      const newStatus = newCurrentAmount <= 0 ? "paid" : "ongoing";
-
-      await updateTransaction(selectedTransaction.id, {
-        ...selectedTransaction,
-        currentAmount: newCurrentAmount,
-        status: newStatus,
-      });
-
-      const paymentData = {
-        transactionId: selectedTransaction.id,
-        amount: amount,
-        createdAt: new Date().toISOString(),
-      };
-      await addPayment(paymentData);
-
+      await updateTransactionStatus(transaction.id, "paid");
       fetchData();
-      onPartialPaymentClose();
-      setPaymentAmount("");
-      toast({
-        title: "Pembayaran berhasil disimpan.",
-        status: "success",
-        duration: 3000,
-        isClosable: true,
-      });
     } catch (err) {
       setError(err.message);
-      toast({
-        title: "Gagal menyimpan pembayaran.",
-        description: err.message,
-        status: "error",
-        duration: 5000,
-        isClosable: true,
-      });
     }
   };
 
-  // Fungsi baru untuk melihat detail
   const handleViewDetails = async (transaction) => {
     try {
       const fetchedPayments = await fetchPaymentsByTransactionId(
@@ -252,15 +157,6 @@ const DebtsPage = () => {
         duration: 5000,
         isClosable: true,
       });
-    }
-  };
-
-  const handleMarkAsPaid = async (transaction) => {
-    try {
-      await updateTransactionStatus(transaction.id, "paid");
-      fetchData();
-    } catch (err) {
-      setError(err.message);
     }
   };
 
@@ -293,7 +189,7 @@ const DebtsPage = () => {
         <Flex mb={6} alignItems="center">
           <Heading>Daftar Utang</Heading>
           <Spacer />
-          <Button colorScheme="teal" onClick={onOpen}>
+          <Button colorScheme="teal" onClick={onAddOpen}>
             Tambah Utang Baru
           </Button>
         </Flex>
@@ -417,229 +313,32 @@ const DebtsPage = () => {
         </Box>
       </Box>
 
-      {/* Modal untuk Tambah Utang */}
-      <Modal isOpen={isOpen} onClose={onClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Tambah Utang Baru</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            <Stack spacing={4}>
-              <FormControl isRequired>
-                <FormLabel>Jumlah</FormLabel>
-                <Input
-                  type="number"
-                  value={newDebt.amount}
-                  onChange={(e) =>
-                    setNewDebt({ ...newDebt, amount: e.target.value })
-                  }
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>Deskripsi</FormLabel>
-                <Input
-                  value={newDebt.description}
-                  onChange={(e) =>
-                    setNewDebt({ ...newDebt, description: e.target.value })
-                  }
-                />
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>Pihak Terkait</FormLabel>
-                <Select
-                  placeholder="Pilih Pihak"
-                  value={newDebt.contactId}
-                  onChange={(e) =>
-                    setNewDebt({ ...newDebt, contactId: e.target.value })
-                  }
-                >
-                  {contacts.map((contact) => (
-                    <option key={contact.id} value={contact.id}>
-                      {contact.name}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>Kategori</FormLabel>
-                <Select
-                  placeholder="Pilih Kategori"
-                  value={newDebt.categoryId}
-                  onChange={(e) =>
-                    setNewDebt({ ...newDebt, categoryId: e.target.value })
-                  }
-                >
-                  {categories.map((category) => (
-                    <option key={category.id} value={category.id}>
-                      {category.name}
-                    </option>
-                  ))}
-                </Select>
-              </FormControl>
-              <FormControl isRequired>
-                <FormLabel>Tanggal Jatuh Tempo</FormLabel>
-                <Input
-                  type="date"
-                  value={newDebt.dueDate}
-                  onChange={(e) =>
-                    setNewDebt({ ...newDebt, dueDate: e.target.value })
-                  }
-                />
-              </FormControl>
-            </Stack>
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handleAddDebt}>
-              Simpan
-            </Button>
-            <Button variant="ghost" onClick={onClose}>
-              Batal
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      {/* Gunakan komponen modal yang baru */}
+      <AddDebtModal
+        isOpen={isAddOpen}
+        onClose={onAddClose}
+        onAddSuccess={fetchData}
+        contacts={contacts}
+        categories={categories}
+      />
 
-      {/* Modal untuk Edit Transaksi */}
-      <Modal isOpen={isEditOpen} onClose={onEditClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Edit Utang</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            {selectedTransaction && (
-              <Stack spacing={4}>
-                <FormControl isRequired>
-                  <FormLabel>Jumlah</FormLabel>
-                  <Input
-                    type="number"
-                    value={selectedTransaction.amount}
-                    onChange={(e) =>
-                      setSelectedTransaction({
-                        ...selectedTransaction,
-                        amount: parseFloat(e.target.value),
-                      })
-                    }
-                  />
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>Deskripsi</FormLabel>
-                  <Input
-                    value={selectedTransaction.description}
-                    onChange={(e) =>
-                      setSelectedTransaction({
-                        ...selectedTransaction,
-                        description: e.target.value,
-                      })
-                    }
-                  />
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>Pihak Terkait</FormLabel>
-                  <Select
-                    placeholder="Pilih Pihak"
-                    value={selectedTransaction.contactId}
-                    onChange={(e) =>
-                      setSelectedTransaction({
-                        ...selectedTransaction,
-                        contactId: e.target.value,
-                      })
-                    }
-                  >
-                    {contacts.map((contact) => (
-                      <option key={contact.id} value={contact.id}>
-                        {contact.name}
-                      </option>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>Kategori</FormLabel>
-                  <Select
-                    placeholder="Pilih Kategori"
-                    value={selectedTransaction.categoryId}
-                    onChange={(e) =>
-                      setSelectedTransaction({
-                        ...selectedTransaction,
-                        categoryId: e.target.value,
-                      })
-                    }
-                  >
-                    {categories.map((category) => (
-                      <option key={category.id} value={category.id}>
-                        {category.name}
-                      </option>
-                    ))}
-                  </Select>
-                </FormControl>
-                <FormControl isRequired>
-                  <FormLabel>Tanggal Jatuh Tempo</FormLabel>
-                  <Input
-                    type="date"
-                    value={selectedTransaction.dueDate}
-                    onChange={(e) =>
-                      setSelectedTransaction({
-                        ...selectedTransaction,
-                        dueDate: e.target.value,
-                      })
-                    }
-                  />
-                </FormControl>
-              </Stack>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handleUpdateTransaction}>
-              Simpan Perubahan
-            </Button>
-            <Button variant="ghost" onClick={onEditClose}>
-              Batal
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <EditDebtModal
+        isOpen={isEditOpen}
+        onClose={onEditClose}
+        transaction={selectedTransaction}
+        onUpdateSuccess={fetchData}
+        contacts={contacts}
+        categories={categories}
+      />
 
-      {/* Modal untuk Pembayaran Sebagian */}
-      <Modal isOpen={isPartialPaymentOpen} onClose={onPartialPaymentClose}>
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Bayar Sebagian</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody>
-            {selectedTransaction && (
-              <Stack spacing={4}>
-                <Text>
-                  Sisa Utang:
-                  <Text as="span" fontWeight="bold" ml={1}>
-                    {new Intl.NumberFormat("id-ID", {
-                      style: "currency",
-                      currency: "IDR",
-                      minimumFractionDigits: 0,
-                    }).format(selectedTransaction.currentAmount)}
-                  </Text>
-                </Text>
-                <FormControl isRequired>
-                  <FormLabel>Jumlah Pembayaran</FormLabel>
-                  <Input
-                    type="number"
-                    value={paymentAmount}
-                    onChange={(e) => setPaymentAmount(e.target.value)}
-                  />
-                </FormControl>
-              </Stack>
-            )}
-          </ModalBody>
-          <ModalFooter>
-            <Button colorScheme="teal" mr={3} onClick={handlePartialPayment}>
-              Simpan Pembayaran
-            </Button>
-            <Button variant="ghost" onClick={onPartialPaymentClose}>
-              Batal
-            </Button>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
+      <RecordPartialPaymentModal
+        isOpen={isPartialPaymentOpen}
+        onClose={onPartialPaymentClose}
+        transaction={selectedTransaction}
+        onPaymentSuccess={fetchData}
+      />
 
-      {/* Modal untuk Detail Transaksi */}
+      {/* Modal Detail tetap di sini karena spesifik */}
       <Modal isOpen={isDetailOpen} onClose={onDetailClose}>
         <ModalOverlay />
         <ModalContent>

@@ -1,3 +1,4 @@
+// src/pages/ContactDetailPage.jsx
 import { useEffect, useState } from "react";
 import {
   Box,
@@ -40,7 +41,8 @@ const ContactDetailPage = () => {
 
     const fetchData = async () => {
       try {
-        const fetchedContact = await fetchContactById(contactId);
+        // Panggil fungsi fetchContactById dengan user.id
+        const fetchedContact = await fetchContactById(contactId, user.id);
         const fetchedTransactions = await fetchTransactionsByContact(
           user.id,
           contactId
@@ -66,23 +68,13 @@ const ContactDetailPage = () => {
     );
   }
 
-  if (error) {
-    return (
-      <Center h="100vh">
-        <Alert status="error" maxW="md">
-          <AlertIcon />
-          {error}
-        </Alert>
-      </Center>
-    );
-  }
-
-  if (!contact) {
+  // Jika kontak tidak ditemukan (karena ID tidak valid atau bukan milik user)
+  if (error || !contact) {
     return (
       <Center h="100vh">
         <Alert status="warning" maxW="md">
           <AlertIcon />
-          Kontak tidak ditemukan.
+          Kontak tidak ditemukan atau Anda tidak memiliki akses ke kontak ini.
         </Alert>
       </Center>
     );

@@ -16,8 +16,8 @@ import {
   VStack,
   useToast,
 } from "@chakra-ui/react";
-import { supabase } from "../config/supabaseClient";
-import { useAuth } from "../context/AuthContext";
+import { supabase } from "../../../../config/supabaseClient";
+import { useAuth } from "../../../../context/AuthContext";
 
 const AddCreditModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({ contact_name: "", amount: "" });

@@ -19,8 +19,8 @@ import {
   Center,
   Spinner,
 } from "@chakra-ui/react";
-import { supabase } from "../config/supabaseClient";
-import { useAuth } from "../context/AuthContext"; // Import useAuth hook
+import { supabase } from "../../../../config/supabaseClient";
+import { useAuth } from "../../../../context/AuthContext"; // Import useAuth hook
 
 const RecordPaymentModal = ({ isOpen, onClose }) => {
   const [outstandingCredits, setOutstandingCredits] = useState([]);

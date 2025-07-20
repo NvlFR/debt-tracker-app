@@ -21,8 +21,8 @@ import { AddIcon, EditIcon, DeleteIcon } from "@chakra-ui/icons";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { fetchContactsByUser, deleteContact } from "../api/dataApi";
-import AddContactModal from "../components/AddContactModal";
-import EditContactModal from "../components/EditContactModal";
+import AddContactModal from "../components/modal/contactModal/components/AddContactModal";
+import EditContactModal from "../components/modal/contactModal/components/EditContactModal";
 
 const ContactsPage = () => {
   const { user } = useAuth();

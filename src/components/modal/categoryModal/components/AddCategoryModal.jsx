@@ -16,8 +16,8 @@ import {
   VStack,
   useToast,
 } from "@chakra-ui/react";
-import { supabase } from "../config/supabaseClient";
-import { useAuth } from "../context/AuthContext"; // Import useAuth hook
+import { supabase } from "../../../../config/supabaseClient";
+import { useAuth } from "../../../../context/AuthContext"; // Import useAuth hook
 
 const AddCategoryModal = ({ isOpen, onClose }) => {
   const [formData, setFormData] = useState({ name: "" });
