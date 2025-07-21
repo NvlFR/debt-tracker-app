@@ -173,13 +173,11 @@ const CreditsPage = () => {
         isClosable: true,
       });
     } catch (err) {
-      console.error("Failed to add credit:", err);
+      console.error("Error adding credit:", err);
       toast({
-        title: "Gagal menambah piutang.",
-        description: err.message,
+        title: "Gagal menambahkan piutang",
+        description: err.message || "Terjadi kesalahan tidak dikenal.",
         status: "error",
-        duration: 5000,
-        isClosable: true,
       });
     } finally {
       setIsSubmitting(false);
@@ -383,9 +381,10 @@ const CreditsPage = () => {
     }
   };
 
+  // Kalkulasi total piutang
   const totalCredits = credits
     .filter((t) => t.status === "ongoing")
-    .reduce((sum, t) => sum + t.currentAmount, 0);
+    .reduce((sum, t) => sum + (parseFloat(t.currentAmount) || 0), 0);
 
   // Fungsi untuk format tanggal
   const formatDate = (dateString) => {
@@ -467,7 +466,7 @@ const CreditsPage = () => {
                             style: "currency",
                             currency: "IDR",
                             minimumFractionDigits: 0,
-                          }).format(credit.currentAmount)}
+                          }).format(parseFloat(credit.currentAmount) || 0)}
                         </Text>
                         <Text fontSize="sm">
                           {credit.contact

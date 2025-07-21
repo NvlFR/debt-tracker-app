@@ -41,7 +41,7 @@ const AddContactModal = ({ isOpen, onClose, onAddSuccess }) => {
     try {
       const contactData = {
         ...formData,
-        user_id: user.id, // <--- Perbaikan: Gunakan user_id
+        user_id: user.id,
       };
 
       await addContact(contactData);

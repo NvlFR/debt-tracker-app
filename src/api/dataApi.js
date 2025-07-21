@@ -26,16 +26,32 @@ export const fetchTransactionsByType = async (user_id, type) => {
   return data;
 };
 
-export const addTransaction = async (transactionData) => {
-  const { data, error } = await supabase.from("transactions").insert([
-    {
-      ...transactionData,
-      user_id: transactionData.user_id,
-    },
-  ]);
-  if (error) throw error;
-  return data;
-};
+export async function addTransaction(transactionData) {
+  try {
+    const { data, error } = await supabase
+      .from("transactions") // atau nama tabel Anda, misalnya 'piutang'
+      .insert([
+        {
+          amount: transactionData.amount,
+          current_amount: transactionData.currentAmount,
+          description: transactionData.description,
+          type: transactionData.type,
+          status: transactionData.status,
+          due_date: transactionData.dueDate,
+          contact_id: transactionData.contactId, // <-- PERBAIKAN DI SINI
+          category_id: transactionData.categoryId, // <-- PERBAIKAN DI SINI
+          user_id: transactionData.userId, // <-- PERBAIKAN DI SINI
+        },
+      ])
+      .select();
+
+    if (error) throw error;
+    return data[0];
+  } catch (error) {
+    console.error("Error adding transaction:", error.message);
+    throw error;
+  }
+}
 
 export const updateTransaction = async (id, transactionData) => {
   const { data, error } = await supabase
@@ -169,11 +185,37 @@ export const fetchContactById = async (contactId, userId) => {
   return data;
 };
 
-export const addContact = async (contactData) => {
-  const { data, error } = await supabase.from("contacts").insert([contactData]);
-  if (error) throw error;
-  return data;
-};
+export async function addContact(contactData) {
+  try {
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
+    if (authError || !user) {
+      throw new Error("User not authenticated.");
+    }
+
+    // Perbaikan utama: memetakan 'phone' ke 'phone_number'
+    const dataToInsert = {
+      name: contactData.name,
+      email: contactData.email,
+      phone_number: contactData.phone,
+      user_id: user.id,
+    };
+
+    const { data, error } = await supabase
+      .from("contacts")
+      .insert([dataToInsert])
+      .select();
+
+    if (error) throw error;
+
+    return data[0];
+  } catch (error) {
+    console.error("Error adding contact:", error.message);
+    throw error;
+  }
+}
 
 export const updateContact = async (contact_id, updatedData, user_id) => {
   const { data, error } = await supabase
